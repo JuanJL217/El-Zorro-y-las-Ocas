@@ -60,16 +60,53 @@ section .data
     orientacionDefault          db "N"
     simboloOcasDefault          db "O"
     simboloZorroDefault         db "X"
+    orientacionNorte            db "N"
+    orientacionSur              db "S"
+    orientacionEste             db "E"
+    orientacionOeste            db "O"
+    ; -1 espacios inaccesibles | 0 espacio | 1 oca | 2 zorro 
+    tableroNorte                db -1,-1, 1, 1, 1,-1,-1
+    tableroNorte1               db -1,-1, 1, 1, 1,-1,-1
+    tableroNorte2               db  1, 1, 1, 1, 1, 1, 1
+    tableroNorte3               db  1, 0, 0, 0, 0, 0, 1
+    tableroNorte4               db  1, 0, 0, 2, 0, 0, 1
+    tableroNorte5               db -1,-1, 0, 0, 0,-1,-1
+    tableroNorte6               db -1,-1, 0, 0, 0,-1,-1
+                                    
+    tableroSur                  db -1,-1, 0, 0, 0,-1,-1
+    tableroSur1                 db -1,-1, 0, 0, 0,-1,-1
+    tableroSur2                 db  1, 0, 0, 2, 0, 0, 1
+    tableroSur3                 db  1, 0, 0, 0, 0, 0, 1
+    tableroSur4                 db  1, 1, 1, 1, 1, 1, 1
+    tableroSur5                 db -1,-1, 1, 1, 1,-1,-1
+    tableroSur6                 db -1,-1, 1, 1, 1,-1,-1
+
+    tableroEste                 db -1,-1, 1, 1, 1,-1,-1
+    tableroEste1                db -1,-1, 0, 0, 1,-1,-1
+    tableroEste2                db  0, 0, 0, 0, 1, 1, 1
+    tableroEste3                db  0, 0, 2, 0, 1, 1, 1
+    tableroEste4                db  0, 0, 0, 0, 1, 1, 1
+    tableroEste5                db -1,-1, 0, 0, 1,-1,-1
+    tableroEste6                db -1,-1, 1, 1, 1,-1,-1
+
+    tableroOeste                db -1,-1, 1, 1, 1,-1,-1
+    tableroOeste1               db -1,-1, 1, 0, 0,-1,-1
+    tableroOeste2               db  1, 1, 1, 0, 0, 0, 0
+    tableroOeste3               db  1, 1, 1, 0, 2, 0, 0
+    tableroOeste4               db  1, 1, 1, 0, 0, 0, 0
+    tableroOeste5               db -1,-1, 1, 0, 0,-1,-1 
+    tableroOeste6               db -1,-1, 1, 1, 1,-1,-1
 
 section .bss
     registroDatosPartida    times 0 resb 70 ; Es una etiqueta (apunta a exactamente lo mismo que la etiqueta "tablero")
     ; Variables de partida - en orden específico para poder acceder a todas desde diferentes rutinas
     tablero                 times 7 resb 7
-    orientacion             resb 1
-    simboloOcas             resb 1
-    simboloZorro            resb 1
-    turnoActual             resb 1
-    ocasComidas             resb 1
+    orientacion             resb 1 ; es un char ascii
+    simboloOcas             resb 1 ; es un char ascii
+    simboloZorro            resb 1 ; es un char ascii
+    turnoActual             resb 1 ; es un número (0 Ocas ; 1 Zorro)
+    ocasComidas             resb 1 ; es un número (0, 1, 2, ...)
+    ; ¡IMPORTANTE! -> TODOS ESTOS DATOS ESTÁN EN UN BYTE CADA UNO, PARA OPERAR CON ELLOS HAY QUE USAR REGISTROS DE 8 BITS (al,bl,cl,dl,ah,bh,ch,dh,...)
 
     movimientosZorro        times 8 resb 1 ; vector de 8 posiciones - una por cada dirección del zorro
     movimientosPosibles     times 8 resb 1 ; vector de 8 posiciones - una por cada dirección del zorro
@@ -135,12 +172,7 @@ cargarPartida:
     cmp             rax,0
     jle             errorPartidaCargarPartida
     ; Sino, voy hacia el turno correspondiente.
-    mov             rax,[turnoActual]
-    ; Si rax == 0, es el turno de las Ocas
-    cmp             rax,0 
-    je              turnoOcas
-    ; Sino, es el turno del zorro
-    jmp             turnoZorro
+    jmp             comenzarTurnoActual
 
 errorPartidaCargarPartida:
     MLimpiarPantalla
@@ -150,12 +182,16 @@ errorPartidaCargarPartida:
 
 nuevaPartida:
     ; Cargo los valores por defecto y paso al menú de personalización
-    mov             rdx,[orientacionDefault]
-    mov             [orientacion],rdx
-    mov             rdx,[simboloOcasDefault]
-    mov             [simboloOcas],rdx
-    mov             rdx,[simboloZorroDefault]
-    mov             [simboloZorro],rdx
+    mov             al,[orientacionDefault]
+    mov             [orientacion],al
+    mov             al,[simboloOcasDefault]
+    mov             [simboloOcas],al
+    mov             al,[simboloZorroDefault]
+    mov             [simboloZorro],al
+    mov             al,1
+    mov             [turnoActual],al
+    mov             al,0
+    mov             [ocasComidas],al
 
 personalizacionMostrar:
     MLimpiarPantalla
@@ -183,7 +219,7 @@ personalizacionIngresarOpcion:
     je              personalizarZorro
     ; Si rax == 3 se ingresó la opción de salir
     cmp             rax,3
-    je              inicializarPartida
+    je              inicializarTablero
     ; Sino se ingresó una opción inválida
     jmp              personalizacionOpcionInvalida
     
@@ -254,7 +290,46 @@ zorroOpcionInvalida:
     Mprintf         mensajeCaracterInvalido
     jmp             zorroIngresarOpcion
 
-inicializarPartida:
+inicializarTablero:
+    mov     ax,[orientacion]
+    cmp     ax,[orientacionNorte]
+    je      elegirTableroNorte
+    cmp     ax,[orientacionSur]
+    je      elegirTableroSur
+    cmp     ax,[orientacionEste]
+    je      elegirTableroEste
+    cmp     ax,[orientacionOeste]
+    je      elegirTableroOeste
+
+elegirTableroNorte:
+    mov     rax,tableroNorte
+    jmp     copiarTablero
+elegirTableroSur:
+    mov     rax,tableroSur
+    jmp     copiarTablero
+elegirTableroEste:
+    mov     rax,tableroEste
+    jmp     copiarTablero
+elegirTableroOeste:
+    mov     rax,tableroOeste
+    jmp     copiarTablero
+
+copiarTablero:
+    mov     rcx,0
+copiarTableroBucle:
+    cmp     rcx,49
+    jge     comenzarTurnoActual ; comienza la partida
+    mov     dh,[rax+rcx]
+    mov     [tablero+rcx],dh
+    inc     rcx
+    jmp     copiarTableroBucle
+
+comenzarTurnoActual:
+    ; si [turnoActual] == 0 es el turno de las ocas
+    cmp     byte[turnoActual],0
+    je      turnoOcas
+    ; sino ([turnoActual] == 1) es el turno del zorro
+    jmp     turnoZorro
 
 turnoOcas:
 
