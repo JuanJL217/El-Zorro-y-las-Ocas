@@ -42,8 +42,8 @@ extern fclose
 extern ValidarMenu
 
 section .data
-    mensajeMainMenu             db "Bienvenido al juego del Zorro y las Ocas!\nSeleccione una opción para jugar (ingresar número de opción)",10,"  0 - Cargar Partida",10,"  1 - Nueva Partida",10,0
-    mensajeOpcionMenuInvalida   db "Opción ingresada inválida. Debes ingresar un número de opción (0 ó 1).",10,0
+    mensajeMainMenu             db "Bienvenido al juego del Zorro y las Ocas!",10,"Seleccione una opción para jugar (ingresar número de opción)",10,"  0 - Cargar Partida",10,"  1 - Nueva Partida",10,0
+    mensajeMenuOpcionInvalida   db "Opción ingresada inválida. Debes ingresar un número de opción (0 ó 1).",10,0
     nombreArchivoGuardado       db "partidaGuardada.dat",0
     modoLecturaBinario          db "rb",0
     cmd_clear                   db "clear",0
@@ -88,10 +88,10 @@ ingresarOpcionMenu:
     cmp             rax,1
     je              preguntarPorPersonalizacion
     ; Sino se ingresó una opción inválida
-    jmp              opcionMenuInvalida
+    jmp              menuOpcionInvalida
     
-opcionMenuInvalida:
-    Mprintf         mensajeOpcionMenuInvalida
+menuOpcionInvalida:
+    Mprintf         mensajeMenuOpcionInvalida
     jmp             ingresarOpcionMenu
 
 cargarPartida:
