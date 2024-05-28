@@ -46,14 +46,14 @@ extern ValidarOca
 extern ValidarZorro
 
 section .data
-    mensajeMainMenu             db "** MENÚ PRINCIPAL **",10,10,"Bienvenido al juego del Zorro y las Ocas!",10,"Seleccione una opción para jugar (ingresar número de opción)",10,"  0 - Cargar Partida",10,"  1 - Nueva Partida",10,0
+    mensajeMainMenu             db "        ** MENÚ PRINCIPAL **",10,10,"Bienvenido al juego del Zorro y las Ocas!",10,"Seleccione una opción para jugar (ingresar número de opción)",10,"  0 - Cargar Partida",10,"  1 - Nueva Partida",10,0
     mensajeOpcionInvalida       db "Opción ingresada inválida. Debes ingresar un número de opción.",10,0
     nombreArchivoGuardado       db "partidaGuardada.dat",0
     modoLecturaBinario          db "rb",0
     cmd_clear                   db "clear",0
     mensajeEnterParaContinuar   db "Presione la tecla Enter para continuar.",10,0
     mensajeErrorCargarPartida   db "Hubo un error al cargar la partida. Se iniciará una partida nueva.",10,0
-    mensajePersonalizarPartida  db "** PERSONALIZACIÓN **",10,10,"Este es el menú de personalización de partida.",10,"Si se quiere jugar con las configuraciones por defecto, ingrese salir sin modificar nada.",10,"  0 - Orientación del tablero (actual: %c)",10,"  1 - Símbolo de las Ocas (actual: %c)",10,"  2 - Símbolo del Zorro (actual: %c)",10,"  3 - Salir",10,0
+    mensajePersonalizarPartida  db "        ** PERSONALIZACIÓN **",10,10,"Este es el menú de personalización de partida. Si se quiere jugar con las configuraciones por defecto, ingrese salir sin modificar nada.",10,"Seleccione una opción para personalizar.",10,"  0 - Orientación del tablero (actual: %c)",10,"  1 - Símbolo de las Ocas (actual: %c)",10,"  2 - Símbolo del Zorro (actual: %c)",10,"  3 - Salir",10,0
     mensajeIngresarOrientacion  db "Ingrese una orientación. Las opciones se eligen según dónde comienzan las Ocas.",10,"  N - Norte (las ocas comienzan arriba)",10,"  S - Sur (las ocas comienzan abajo)",10,"  E - Este (las ocas comienzan a la derecha)",10,"  O - Oeste (las ocas comienzan a la izquierda)",10,0
     mensajeCaracterInvalido     db "El caracter que se ingresó no es válido.",10,0
     mensajeSeleccionInvalida    db "Ingrese una de las opciones ennumeradas.",10,0
