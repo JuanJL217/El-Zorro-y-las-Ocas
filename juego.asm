@@ -10,13 +10,13 @@
     call    gets
     add     rsp,8
 %endmacro 
-%macro  MLimpiarPantalla
+%macro  MLimpiarPantalla 0
     mov     rdi,cmd_clear
     sub     rsp,8
     call    system
     add     rsp,8
 %endmacro
-%macro  MEnterParaContinuar
+%macro  MEnterParaContinuar 0
     mov     rdi,mensajeEnterParaContinuar
     sub     rsp,8
     call    printf
@@ -69,6 +69,7 @@ section .bss
 section .text
 
 main:
+    MLimpiarPantalla
 
 mostrarMainMenu:
     Mprintf         mensajeMainMenu
@@ -135,3 +136,10 @@ errorPartidaCargarPartida:
     Mprintf         mensajeErrorCargarPartida
     MEnterParaContinuar
     jmp             preguntarPorPersonalizacion
+
+preguntarPorPersonalizacion:
+
+turnoOcas:
+
+turnoZorro:
+    ret

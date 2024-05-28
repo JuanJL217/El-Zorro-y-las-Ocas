@@ -5,21 +5,20 @@ section .data
     menuOpcionNuevaPartida              db "1",0
 
 section .bss
-    bufferEntrada                       resb 100
+    inicioStringValidarMenu             resq 1
 
 section .text
 
 ValidarMenu:
-    Mgets   bufferEntrada
-
+    mov     [inicioStringValidarMenu],rdi
     mov     rcx,1
-    mov     rsi,bufferEntrada
+    mov     rsi,[inicioStringValidarMenu]
     mov     rdi,menuOpcionCargarPartida
     repe cmpsb 
     je      opcionCargarPartida
 
     mov     rcx,1
-    mov     rsi,bufferEntrada
+    mov     rsi,[inicioStringValidarMenu]
     mov     rdi,menuOpcionNuevaPartida
     repe cmpsb
     je      opcionNuevaPartida
@@ -31,7 +30,7 @@ opcionInvalida:
 opcionCargarPartida:
     mov     rax,0
     ret
-    
+
 opcionNuevaPartida:
     mov     rax,1
     ret
