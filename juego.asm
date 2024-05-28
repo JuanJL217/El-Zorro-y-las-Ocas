@@ -42,8 +42,6 @@ extern fclose
 extern ValidarMenu
 extern ValidarPersonalizacion
 extern ValidarOrientacion
-extern ValidarOca
-extern ValidarZorro
 
 section .data
     mensajeMainMenu             db "        ** MENÚ PRINCIPAL **",10,10,"Bienvenido al juego del Zorro y las Ocas!",10,"Seleccione una opción para jugar (ingresar número de opción)",10,"  0 - Cargar Partida",10,"  1 - Nueva Partida",10,0

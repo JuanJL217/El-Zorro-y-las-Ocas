@@ -1,37 +1,84 @@
 global ValidarMenu
+global ValidarPersonalizacion
+global ValidarOrientacion
 
 section .data
-    menuOpcionCargarPartida             db "0",0
-    menuOpcionNuevaPartida              db "1",0
+    menuOpcionCargarPartida             db "0"
+    menuOpcionNuevaPartida              db "1"
+    personalizacionOrientacion          db "0"
+    personalizacionOcas                 db "1"
+    personalizacionZorro                db "2"
+    personalizacionSalir                db "3"
 
 section .bss
-    inicioStringValidarMenu             resq 1
+    bufferEntradaValidar                resq 1
 
 section .text
 
 ValidarMenu:
-    mov     [inicioStringValidarMenu],rdi
-    mov     rcx,1
-    mov     rsi,[inicioStringValidarMenu]
-    mov     rdi,menuOpcionCargarPartida
-    repe cmpsb 
-    je      opcionCargarPartida
 
-    mov     rcx,1
-    mov     rsi,[inicioStringValidarMenu]
-    mov     rdi,menuOpcionNuevaPartida
-    repe cmpsb
-    je      opcionNuevaPartida
+    mov     [bufferEntradaValidar],rdi
 
-opcionInvalida:
+    mov     al,[menuOpcionCargarPartida]
+    cmp     al,[bufferEntradaValidar]
+    je      menuEligeCargarPartida
+
+    mov     al,[menuOpcionNuevaPartida]
+    cmp     al,[bufferEntradaValidar]
+    je      menuEligeNuevaPartida
+
+menuOpcionInvalida:
     mov     rax,-1
     ret
 
-opcionCargarPartida:
+menuEligeCargarPartida:
     mov     rax,0
     ret
 
-opcionNuevaPartida:
+menuEligeNuevaPartida:
     mov     rax,1
     ret
 
+
+ValidarPersonalizacion:
+
+    mov     [bufferEntradaValidar],rdi
+
+    mov     al,[personalizacionOrientacion]
+    cmp     al,[bufferEntradaValidar]
+    je      persoEligeOrientacion
+
+    mov     al,[personalizacionOcas]
+    cmp     al,[bufferEntradaValidar]
+    je      persoEligeOcas
+
+    mov     al,[personalizacionZorro]
+    cmp     al,[bufferEntradaValidar]
+    je      persoEligeZorro
+
+    mov     al,[personalizacionSalir]
+    cmp     al,[bufferEntradaValidar]
+    je      persoEligeSalir
+
+persoOpcionInvalida:
+    mov     rax,-1
+    ret
+
+persoEligeOrientacion:
+    mov     rax,0
+    ret
+
+persoEligeOcas:
+    mov     rax,1
+    ret
+
+persoEligeZorro:
+    mov     rax,2
+    ret
+
+persoEligeSalir:
+    mov     rax,3
+    ret
+
+
+ValidarOrientacion:
