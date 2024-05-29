@@ -43,14 +43,19 @@ extern ValidarMenu
 extern ValidarPersonalizacion
 extern ValidarOrientacion
 
+extern copiarTablero
+
 section .data
     mensajeMainMenu             db "        ** MENÚ PRINCIPAL **",10,10,"Bienvenido al juego del Zorro y las Ocas!",10,"Seleccione una opción para jugar (ingresar número de opción)",10,"  0 - Cargar Partida",10,"  1 - Nueva Partida",10,0
     mensajeOpcionInvalida       db "Opción ingresada inválida. Debes ingresar un número de opción.",10,0
     nombreArchivoGuardado       db "partidaGuardada.dat",0
     modoLecturaBinario          db "rb",0
+    modoEscrituraBinario        db "wb",0
     cmd_clear                   db "clear",0
     mensajeEnterParaContinuar   db "Presione la tecla Enter para continuar.",10,0
     mensajeErrorCargarPartida   db "Hubo un error al cargar la partida. Se iniciará una partida nueva.",10,0
+    mensajeErrorGuardarrPartida db "Hubo un error al guardar la partida.",10,0
+    mensajeExitoGuardarPartida  db "La partida se guardó exitosamente.",10,0
     mensajePersonalizarPartida  db "        ** PERSONALIZACIÓN **",10,10,"Este es el menú de personalización de partida. Si se quiere jugar con las configuraciones por defecto, ingrese salir sin modificar nada.",10,"Seleccione una opción para personalizar.",10,"  0 - Orientación del tablero (actual: %c)",10,"  1 - Símbolo de las Ocas (actual: %c)",10,"  2 - Símbolo del Zorro (actual: %c)",10,"  3 - Salir",10,0
     mensajeIngresarOrientacion  db "Ingrese una orientación. Las opciones se eligen según dónde comienzan las Ocas.",10,"  N - Norte (las ocas comienzan arriba)",10,"  S - Sur (las ocas comienzan abajo)",10,"  E - Este (las ocas comienzan a la derecha)",10,"  O - Oeste (las ocas comienzan a la izquierda)",10,0
     mensajeCaracterInvalido     db "El caracter que se ingresó no es válido.",10,0
@@ -64,6 +69,8 @@ section .data
     orientacionSur              db "S"
     orientacionEste             db "E"
     orientacionOeste            db "O"
+    turnoDelZorro               db 1
+    turnoDeLasOcas              db 0
     ; -1 espacios inaccesibles | 0 espacio | 1 oca | 2 zorro 
     tableroNorte                db -1,-1, 1, 1, 1,-1,-1
     tableroNorte1               db -1,-1, 1, 1, 1,-1,-1
@@ -188,7 +195,7 @@ nuevaPartida:
     mov             [simboloOcas],al
     mov             al,[simboloZorroDefault]
     mov             [simboloZorro],al
-    mov             al,1
+    mov             al,[turnoDelZorro]
     mov             [turnoActual],al
     mov             al,0
     mov             [ocasComidas],al
@@ -291,38 +298,34 @@ zorroOpcionInvalida:
     jmp             zorroIngresarOpcion
 
 inicializarTablero:
-    mov     ax,[orientacion]
-    cmp     ax,[orientacionNorte]
+    mov     al,[orientacion]
+    cmp     al,[orientacionNorte]
     je      elegirTableroNorte
-    cmp     ax,[orientacionSur]
+    cmp     al,[orientacionSur]
     je      elegirTableroSur
-    cmp     ax,[orientacionEste]
+    cmp     al,[orientacionEste]
     je      elegirTableroEste
-    cmp     ax,[orientacionOeste]
+    cmp     al,[orientacionOeste]
     je      elegirTableroOeste
 
 elegirTableroNorte:
-    mov     rax,tableroNorte
+    mov     rsi,tableroNorte
     jmp     copiarTablero
 elegirTableroSur:
-    mov     rax,tableroSur
+    mov     rsi,tableroSur
     jmp     copiarTablero
 elegirTableroEste:
-    mov     rax,tableroEste
+    mov     rsi,tableroEste
     jmp     copiarTablero
 elegirTableroOeste:
-    mov     rax,tableroOeste
+    mov     rsi,tableroOeste
     jmp     copiarTablero
 
-copiarTablero:
-    mov     rcx,0
-copiarTableroBucle:
-    cmp     rcx,49
-    jge     comenzarTurnoActual ; comienza la partida
-    mov     dh,[rax+rcx]
-    mov     [tablero+rcx],dh
-    inc     rcx
-    jmp     copiarTableroBucle
+copiarTableroCorrespondiente:
+    mov     rdi,tablero
+    sub     rsp,8
+    call    copiarTablero
+    add     rsp,8    
 
 comenzarTurnoActual:
     ; si [turnoActual] == 0 es el turno de las ocas
@@ -334,4 +337,43 @@ comenzarTurnoActual:
 turnoOcas:
 
 turnoZorro:
+
     ret
+
+guardarPartida:
+    ; Abro el archivo de guardado
+    mov             rdi,nombreArchivoGuardado
+    mov             rsi,modoEscrituraBinario
+    sub             rsp,8
+    call            fopen
+    add             rsp,8
+    ; Si hubo un error, informo al usuario y vuelvo al juego
+    cmp             rax,0
+    jle             guardarPartidaError
+    ; Sino, guardo la partida
+    mov             qword[idArchivoGuardado],rax
+    mov             rdi,registroDatosPartida
+    mov             rsi,70
+    mov             rcx,[idArchivoGuardado]
+    sub             rsp,8
+    call            fwrite
+    add             rsp,8
+    mov             qword[qwordTemporal],rax
+    ; Cierro el archivo
+    mov             rdi,[idArchivoGuardado]
+    sub             rsp,8
+    call            fclose
+    add             rsp,8
+    ; Si hubo un error, informo al usuario y vuelvo al juego
+    mov             rax,qword[qwordTemporal]
+    cmp             rax,0
+    jle             guardarPartidaError
+    ; Sino, voy hacia el turno correspondiente.
+    Mprintf         mensajeExitoGuardarPartida
+    MEnterParaContinuar
+    jmp             comenzarTurnoActual
+
+guardarPartidaError:
+    Mprintf         mensajeErrorGuardarPartida
+    MEnterParaContinuar
+    jmp             comenzarTurnoActual
