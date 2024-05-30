@@ -32,6 +32,12 @@ section .data
     mostrarElemento         db " %c ",0
     mostrarFila             db " %li ",0
 
+    ; ANSI
+    ANSIBoldOn              db 27,"[1m",0
+    ANSIBoldOff             db 27,"[22m",0
+    ANSIResetColor          db 27,"[0m",0
+    ANSIColorMarco          db 27,"[38;5;88m",0
+
 section .bss
     iteradorFila            resq 1
     iteradorCol             resq 1
@@ -109,13 +115,17 @@ MostrarTablero:
     mov     al,[rdi]
     mov     [simboloZorro],al
 
+    Mprintf ANSIColorMarco
     Mprintf mostrarLineaColumnas
+    Mprintf ANSIResetColor
                                             ; marco las líneas que se pueden copiar y pegar para hacer
     mov     qword[iteradorFila],0           ; la estructura de un loop que itera sobre todo el tablero
     mov     qword[iteradorCol],0            ;
+    Mprintf ANSIColorMarco
     mov     r8,[iteradorFila]
     inc     r8
     Mprintf mostrarFila,r8
+    Mprintf ANSIResetColor
 
 mostrarTableroLoop:
     cmp     qword[iteradorCol],7            ;
@@ -141,25 +151,31 @@ mostrarTableroLoop:
     jmp     mostrarTableroLoop              ;
 
 mostrarTableroProximaFila:                  ;
+    Mprintf ANSIColorMarco
     mov     r8,[iteradorFila]
     inc     r8
     Mprintf mostrarFila,r8
+    Mprintf ANSIResetColor
     Mprintf nuevaLinea
-    
+
     inc     qword[iteradorFila]             ;
     mov     qword[iteradorCol],0            ;
 
     cmp     qword[iteradorFila],7           ;
     jge     mostrarTableroFin               ;
 
+    Mprintf ANSIColorMarco
     mov     r8,[iteradorFila]
     inc     r8
     Mprintf mostrarFila,r8
+    Mprintf ANSIResetColor
 
     jmp     mostrarTableroLoop              ;
 
 mostrarTableroFin:
+    Mprintf ANSIColorMarco
     Mprintf mostrarLineaColumnas
+    Mprintf ANSIResetColor
     ret
 
 ;   en bl está el código del elemento en tablero
