@@ -42,6 +42,8 @@ extern fclose
 extern ValidarMenu
 extern ValidarPersonalizacion
 extern ValidarOrientacion
+extern CopiarTablero
+extern MostrarTablero
 
 extern copiarTablero
 
@@ -54,7 +56,7 @@ section .data
     cmd_clear                   db "clear",0
     mensajeEnterParaContinuar   db "Presione la tecla Enter para continuar.",10,0
     mensajeErrorCargarPartida   db "Hubo un error al cargar la partida. Se iniciará una partida nueva.",10,0
-    mensajeErrorGuardarrPartida db "Hubo un error al guardar la partida.",10,0
+    mensajeErrorGuardarPartida  db "Hubo un error al guardar la partida.",10,0
     mensajeExitoGuardarPartida  db "La partida se guardó exitosamente.",10,0
     mensajePersonalizarPartida  db "        ** PERSONALIZACIÓN **",10,10,"Este es el menú de personalización de partida. Si se quiere jugar con las configuraciones por defecto, ingrese salir sin modificar nada.",10,"Seleccione una opción para personalizar.",10,"  0 - Orientación del tablero (actual: %c)",10,"  1 - Símbolo de las Ocas (actual: %c)",10,"  2 - Símbolo del Zorro (actual: %c)",10,"  3 - Salir",10,0
     mensajeIngresarOrientacion  db "Ingrese una orientación. Las opciones se eligen según dónde comienzan las Ocas.",10,"  N - Norte (las ocas comienzan arriba)",10,"  S - Sur (las ocas comienzan abajo)",10,"  E - Este (las ocas comienzan a la derecha)",10,"  O - Oeste (las ocas comienzan a la izquierda)",10,0
@@ -248,8 +250,8 @@ orientacionIngresarOpcion:
     cmp             rax,0
     jl              orientacionOpcionInvalida
     ; Sino, guardo el primer caracter ingresado como nueva orientación
-    mov             rdx,[inputBuffer]
-    mov             [orientacion],rdx
+    mov             al,[inputBuffer]
+    mov             [orientacion],al
 
     jmp             personalizacionMostrar
 orientacionOpcionInvalida:
@@ -262,16 +264,16 @@ personalizarOcas:
 ocasIngresarOpcion:
     Mgets           inputBuffer
     ; Si se ingresa el mismo símbolo que para el zorro, es inválido
-    mov             rax,[simboloZorro]
-    cmp             rax,[inputBuffer]
+    mov             al,[simboloZorro]
+    cmp             al,[inputBuffer]
     je              ocasOpcionInvalida
     ; Si se ingresa un espacio (ascii 32), es inválido
-    mov             rax,32
-    cmp             rax,[inputBuffer]
+    mov             al,32
+    cmp             al,[inputBuffer]
     je              ocasOpcionInvalida
     ; Sino, guardo el primer caracter ingresado como nuevo simbolo para las ocas
-    mov             rax,[inputBuffer]
-    mov             [simboloOcas],rax
+    mov             al,[inputBuffer]
+    mov             [simboloOcas],al
     jmp             personalizacionMostrar
 ocasOpcionInvalida:
     Mprintf         mensajeCaracterInvalido
@@ -282,16 +284,16 @@ personalizarZorro:
 zorroIngresarOpcion:
     Mgets           inputBuffer
     ; Si se ingresa el mismo símbolo que para las ocas, es inválido
-    mov             rax,[simboloOcas]
-    cmp             rax,[inputBuffer]
+    mov             al,[simboloOcas]
+    cmp             al,[inputBuffer]
     je              zorroOpcionInvalida
     ; Si se ingresa un espacio (ascii 32), es inválido
-    mov             rax,32
-    cmp             rax,[inputBuffer]
+    mov             al,32
+    cmp             al,[inputBuffer]
     je              zorroOpcionInvalida
     ; Sino, guardo el primer caracter ingresado como nuevo simbolo para el zorro
-    mov             rax,[inputBuffer]
-    mov             [simboloZorro],rax
+    mov             al,[inputBuffer]
+    mov             [simboloZorro],al
     jmp             personalizacionMostrar
 zorroOpcionInvalida:
     Mprintf         mensajeCaracterInvalido
@@ -310,21 +312,21 @@ inicializarTablero:
 
 elegirTableroNorte:
     mov     rsi,tableroNorte
-    jmp     copiarTablero
+    jmp     copiarTableroCorrespondiente
 elegirTableroSur:
     mov     rsi,tableroSur
-    jmp     copiarTablero
+    jmp     copiarTableroCorrespondiente
 elegirTableroEste:
     mov     rsi,tableroEste
-    jmp     copiarTablero
+    jmp     copiarTableroCorrespondiente
 elegirTableroOeste:
     mov     rsi,tableroOeste
-    jmp     copiarTablero
+    jmp     copiarTableroCorrespondiente
 
 copiarTableroCorrespondiente:
     mov     rdi,tablero
     sub     rsp,8
-    call    copiarTablero
+    call    CopiarTablero
     add     rsp,8    
 
 comenzarTurnoActual:
@@ -337,7 +339,11 @@ comenzarTurnoActual:
 turnoOcas:
 
 turnoZorro:
-
+    MLimpiarPantalla
+    mov     rdi,tablero
+    sub     rsp,8
+    call    MostrarTablero
+    add     rsp,8 
     ret
 
 guardarPartida:

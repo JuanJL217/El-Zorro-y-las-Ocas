@@ -3,8 +3,9 @@ global ValidarPersonalizacion
 global ValidarOrientacion
 
 section .data
-    menuOpcionCargarPartida             db "0"
-    menuOpcionNuevaPartida              db "1"
+    menuOpcionCargarPartida             db "0",0
+    menuOpcionNuevaPartida              db "1",0
+
     personalizacionOrientacion          db "0"
     personalizacionOcas                 db "1"
     personalizacionZorro                db "2"
@@ -16,8 +17,8 @@ section .bss
 section .text
 
 ValidarMenu:
-
-    mov     [bufferEntradaValidar],rdi
+    mov     rax,[rdi]
+    mov     [bufferEntradaValidar],rax
 
     mov     al,[menuOpcionCargarPartida]
     cmp     al,[bufferEntradaValidar]
@@ -42,7 +43,8 @@ menuEligeNuevaPartida:
 
 ValidarPersonalizacion:
 
-    mov     [bufferEntradaValidar],rdi
+    mov     rax,[rdi]
+    mov     [bufferEntradaValidar],rax
 
     mov     al,[personalizacionOrientacion]
     cmp     al,[bufferEntradaValidar]
