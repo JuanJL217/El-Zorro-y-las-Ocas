@@ -109,16 +109,16 @@ section .data
 section .bss
     registroDatosPartida    times 0 resb 70 ; Es una etiqueta (apunta a exactamente lo mismo que la etiqueta "tablero")
     ; Variables de partida - en orden específico para poder acceder a todas desde diferentes rutinas
+    ; ¡IMPORTANTE! -> TODOS ESTOS DATOS ESTÁN EN UN BYTE CADA UNO, PARA OPERAR CON ELLOS HAY QUE USAR REGISTROS DE 8 BITS (al,bl,cl,dl,ah,bh,ch,dh,...)
     tablero                 times 7 resb 7
     orientacion             resb 1 ; es un char ascii
     simboloOcas             resb 1 ; es un char ascii
     simboloZorro            resb 1 ; es un char ascii
     turnoActual             resb 1 ; es un número (0 Ocas ; 1 Zorro)
     ocasComidas             resb 1 ; es un número (0, 1, 2, ...)
-    ; ¡IMPORTANTE! -> TODOS ESTOS DATOS ESTÁN EN UN BYTE CADA UNO, PARA OPERAR CON ELLOS HAY QUE USAR REGISTROS DE 8 BITS (al,bl,cl,dl,ah,bh,ch,dh,...)
-
-    movimientosZorro        times 8 resb 1 ; vector de 8 posiciones - una por cada dirección del zorro
+    estadisticasZorro       times 8 resb 1 ; vector de 8 posiciones - una por cada dirección del zorro
     movimientosPosibles     times 8 resb 1 ; vector de 8 posiciones - una por cada dirección del zorro
+
     inputBuffer             resb 100
     idArchivoGuardado       resq 1
     qwordTemporal           resq 1

@@ -42,6 +42,7 @@ section .bss
     iteradorFila            resq 1
     iteradorCol             resq 1
     dirTablero              resq 1
+    dirVectMovimientos      resq 1
     simboloZorro            resb 1
     simboloOcas             resb 1
 
@@ -202,3 +203,16 @@ esOca:
 esZorro:
     mov     al,[simboloZorro]
     ret
+
+;   recibe en rdi la posicion de inicio del tablero
+;   actualiza el vector movimientosPosibles con los movimientos posibles para el zorro
+;   movimientos posibles:
+;   1: arriba izq, 2: arriba, 3: arriba der
+;   4: izquierda ,          , 6: derecha
+;   7: abajo  izq, 8: abajo , 9: abajo  der
+;   si el número almacenado es positivo, es un movimiento común.
+;   si es negativo, es un movimiento para comer una oca.
+CalcularMovimientosZorro:
+    mov     [dirTablero],rdi
+    add     rdi,69 ; rdi ahora apunta al primer elemento del vector movimientosPosibles
+    mov     [dirVectMovimientos],rdi
