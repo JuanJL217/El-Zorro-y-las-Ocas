@@ -11,6 +11,11 @@ section .data
     personalizacionZorro                db "2"
     personalizacionSalir                db "3"
 
+    orientacionNorte                    db "N",0
+    orientacionSur                      db "S",0
+    orientacionEste                     db "E",0
+    orientacionOeste                    db "O",0
+
 section .bss
     bufferEntradaValidar                resq 1
 
@@ -84,3 +89,41 @@ persoEligeSalir:
 
 
 ValidarOrientacion:
+    mov     rax,[rdi]
+    mov     [bufferEntradaValidar],rax
+
+    mov     al,[orientacionNorte]
+    cmp     al,[bufferEntradaValidar]
+    je      orientacionEligeNorte
+
+    mov     al,[orientacionSur]
+    cmp     al,[bufferEntradaValidar]
+    je      orientacionEligeSur
+
+    mov     al,[orientacionEste]
+    cmp     al,[bufferEntradaValidar]
+    je      orientacionEligeEste
+
+    mov     al,[orientacionOeste]
+    cmp     al,[bufferEntradaValidar]
+    je      orientacionEligeOeste
+
+orientacionInvalida:
+    mov     rax,-1
+    ret
+
+orientacionEligeNorte:
+    mov     rax,0
+    ret
+
+orientacionEligeSur:
+    mov     rax,1
+    ret
+
+orientacionEligeEste:
+    mov     rax,2
+    ret
+
+orientacionEligeOeste:
+    mov     rax,3
+    ret
