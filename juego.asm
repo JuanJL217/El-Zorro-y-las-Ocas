@@ -44,6 +44,9 @@ extern ValidarPersonalizacion
 extern ValidarOrientacion
 extern CopiarTablero
 extern MostrarTablero
+extern VerificarMovimientoOcas
+extern VerificarMovimientoZorro
+extern ContarOcas
 
 extern copiarTablero
 
@@ -64,6 +67,9 @@ section .data
     mensajeSeleccionInvalida    db "Ingrese una de las opciones ennumeradas.",10,0
     mensajeIngresarSimboloOcas  db "Ingrese un símbolo para representar las Ocas. No puede ser un espacio ni tampoco el símbolo del zorro.",10,0
     mensajeIngresarSimboloZorro db "Ingrese un símbolo para representar el Zorro. No puede ser un espacio ni tampoco el símbolo de las ocas.",10,0
+    mensajeEmpate               db "El juego ha terminado en empate.",10,0
+    mensajeGanoZorro            db "El Zorro ha ganado la partida.",10,0
+    mensajeGanaronOcas          db "Las Ocas han ganado la partida.",10,0
     orientacionDefault          db "N"
     simboloOcasDefault          db "O"
     simboloZorroDefault         db "X"
@@ -345,6 +351,84 @@ turnoZorro:
     call    MostrarTablero
     add     rsp,8 
     ret
+
+validarFin:
+    MLimpiarPantalla
+    ; Si ninguna oca tiene movimientos disponibles -> empate
+    mov     rdi,tablero
+    sub     rsp,8
+    call    VerificarMovimientoOcas    ;Falta implementar: (guarda en rax 0 si no hay movimientos disponibles, 1 si hay movimientos disponibles)
+    add     rsp,8
+    cmp     rax,0
+    je     mostrarEmpate
+
+    ; Verificar si fue el turno de las Ocas
+    cmp     byte [turnoActual],0
+    je      verificarVictoriaOcas
+
+    ; Verificar si fue el turno del Zorro
+    cmp     byte [turnoActual],1
+    je      verificarVictoriaZorro
+
+verificarVictoriaOcas:
+    ; Si el Zorro no tiene movimientos disponibles, ganaron las Ocas
+    mov     rdi,tablero
+    sub     rsp,8
+    call    VerificarMovimientoZorro    ;Falta implementar: (guarda en rax 0 si no hay movimientos disponibles, 1 si hay movimientos disponibles)
+    add     rsp,8
+    cmp     rax,0
+    je      mostrarVictoriaOcas
+
+    ; No perdió nadie, ir al turno siguiente
+    jmp     cambiarTurnoActual
+
+verificarVictoriaZorro:
+    ; Si quedan menos de 6 Ocas, ganó el Zorro
+    mov     rdi,tablero
+    sub     rsp,8
+    call    ContarOcas  ;Falta implementar: (guarda en rax la cantidad de ocas)
+    add     rsp,8
+    cmp     rax,6
+    jl      mostrarVictoriaZorro
+
+    ; No perdió nadie, ir al turno siguiente
+    jmp     cambiarTurnoActual
+
+mostrarEmpate:
+    ; Mostrar empate y mostrar estadísticas de fin
+    Mprintf mensajeEmpate
+    jmp     mostrarEstadisticasFin
+
+mostrarVictoriaZorro:
+    ; Mostrar que ganó el Zorro y mostrar estadísticas de fin
+    Mprintf mensajeGanoZorro
+    jmp     mostrarEstadisticasFin
+
+mostrarVictoriaOcas:
+    ; Mostrar que ganaron las Ocas y mostrar estadísticas de fin
+    Mprintf mensajeGanaronOcas
+    jmp     mostrarEstadisticasFin
+
+mostrarEstadisticasFin:
+;Falta implementar
+; Mostrar estadísticas de fin y finalizar el juego
+
+cambiarTurnoActual:
+    ; Si [turnoActual] == 0, cambio a 1. Sino, cambio a 0
+    cmp     byte[turnoActual],0
+    je      cambiarTurnoAZorro
+    jmp    cambiarTurnoAOcas
+
+cambiarTurnoAZorro:
+    mov     al,1
+    mov     [turnoActual],al
+    jmp     comenzarTurnoActual
+
+cambiarTurnoAOcas:
+    mov     al,0
+    mov     [turnoActual],al
+    jmp     comenzarTurnoActual
+
 
 guardarPartida:
     ; Abro el archivo de guardado

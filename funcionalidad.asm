@@ -14,6 +14,10 @@
 
 global CopiarTablero
 global MostrarTablero
+global VerificarMovimientoOcas
+global VerificarMovimientoZorro
+global ContarOcas
+
 extern printf
 
 section .data
@@ -216,3 +220,15 @@ CalcularMovimientosZorro:
     mov     [dirTablero],rdi
     add     rdi,69 ; rdi ahora apunta al primer elemento del vector movimientosPosibles
     mov     [dirVectMovimientos],rdi
+
+VerificarMovimientoOcas:
+; Falta implementar
+    ret
+
+VerificarMovimientoZorro:
+; Falta implementar
+    ret
+
+ContarOcas:
+; Falta implementar
+    ret
