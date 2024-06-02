@@ -228,7 +228,3 @@ VerificarMovimientoOcas:
 VerificarMovimientoZorro:
 ; Falta implementar
     ret
-
-ContarOcas:
-; Falta implementar
-    ret

@@ -384,10 +384,9 @@ verificarVictoriaOcas:
 
 verificarVictoriaZorro:
     ; Si quedan menos de 6 Ocas, ganó el Zorro
-    mov     rdi,tablero
-    sub     rsp,8
-    call    ContarOcas  ;Falta implementar: (guarda en rax la cantidad de ocas)
-    add     rsp,8
+    mov     al,17
+    sub     al,[ocasComidas]
+
     cmp     rax,6
     jl      mostrarVictoriaZorro
 
