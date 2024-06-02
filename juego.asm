@@ -113,7 +113,7 @@ section .data
     tableroOeste6               db -1,-1, 1, 1, 1,-1,-1
 
 section .bss
-    registroDatosPartida    times 0 resb 70 ; Es una etiqueta (apunta a exactamente lo mismo que la etiqueta "tablero")
+    registroDatosPartida    times 0 resb 94 ; Es una etiqueta (apunta a exactamente lo mismo que la etiqueta "tablero")
     ; Variables de partida - en orden específico para poder acceder a todas desde diferentes rutinas
     ; ¡IMPORTANTE! -> TODOS ESTOS DATOS ESTÁN EN UN BYTE CADA UNO, PARA OPERAR CON ELLOS HAY QUE USAR REGISTROS DE 8 BITS (al,bl,cl,dl,ah,bh,ch,dh,...)
     tablero                 times 7 resb 7
@@ -123,7 +123,7 @@ section .bss
     turnoActual             resb 1 ; es un número (0 Ocas ; 1 Zorro)
     ocasComidas             resb 1 ; es un número (0, 1, 2, ...)
     estadisticasZorro       times 8 resb 1 ; vector de 8 posiciones - una por cada dirección del zorro
-    movimientosPosibles     times 8 resb 1 ; vector de 8 posiciones - una por cada dirección del zorro
+    movimientosPosibles     times 8 resb 4 ; vector de 8 elementos, cada uno con 4 valores - una por cada dirección posible
 
     inputBuffer             resb 100
     idArchivoGuardado       resq 1
@@ -171,7 +171,7 @@ cargarPartida:
     ; Sino, cargo la partida
     mov             qword[idArchivoGuardado],rax
     mov             rdi,registroDatosPartida
-    mov             rsi,70
+    mov             rsi,94
     mov             rcx,[idArchivoGuardado]
     sub             rsp,8
     call            fread
@@ -442,7 +442,7 @@ guardarPartida:
     ; Sino, guardo la partida
     mov             qword[idArchivoGuardado],rax
     mov             rdi,registroDatosPartida
-    mov             rsi,70
+    mov             rsi,94
     mov             rcx,[idArchivoGuardado]
     sub             rsp,8
     call            fwrite
