@@ -19,11 +19,11 @@ section .data
     ; -1 espacios inaccesibles | 0 espacio | 1 oca | 2 zorro 
     tableroNorte                db -1,-1, 1, 1, 1,-1,-1
     tableroNorte1               db -1,-1, 1, 1, 1,-1,-1
-    tableroNorte2               db  1, 1, 0, 1, 1, 1, 1
-    tableroNorte3               db  1, 0, 1, 0, 0, 0, 1
-    tableroNorte4               db  1, 1, 2, 0, 0, 0, 1
-    tableroNorte5               db -1,-1, 0, 1, 0,-1,-1
-    tableroNorte6               db -1,-1, 1, 1, 0,-1,-1
+    tableroNorte2               db  1, 1, 1, 1, 1, 1, 1
+    tableroNorte3               db  1, 0, 0, 0, 0, 0, 1
+    tableroNorte4               db  1, 0, 0, 2, 0, 0, 1
+    tableroNorte5               db -1,-1, 0, 0, 0,-1,-1
+    tableroNorte6               db -1,-1, 0, 0, 0,-1,-1
 
 
     repZorro                    db 2
@@ -218,7 +218,7 @@ movimientoFilaBucle:
     mov     rbx,[dirVectMovimientos]
     mov     al,byte[movActual]
     mov     byte[rbx],al
-    ; rbx = (f + i)
+    ; rax = (f + i)
     mov     rax,qword[filaZorro]
     add     rax,qword[iteradorFila]
     mov     byte[rbx+1],al
@@ -229,9 +229,9 @@ movimientoFilaBucle:
 
     mov     byte[rbx+3],0
 
-    mov     rax,[rbx]
+    mov     rax,[dirVectMovimientos]
     add     rax,4
-    mov     [rbx],rax
+    mov     [dirVectMovimientos],rax
     jmp     calcProxMov
 
 verSiComeOca:
@@ -305,10 +305,11 @@ movimientoProxFila:
     jg      finCalcMovimientos
     
     mov     qword[iteradorCol],-1
-    inc     byte[movActual]
     jmp     movimientoFilaBucle
 
 finCalcMovimientos:
+    mov     rbx,[dirVectMovimientos]
+    mov     byte[rbx],-1
     ret
 
 

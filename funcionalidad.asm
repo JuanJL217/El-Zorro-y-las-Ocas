@@ -49,6 +49,9 @@ section .bss
     dirVectMovimientos      resq 1
     simboloZorro            resb 1
     simboloOcas             resb 1
+    filaZorro               resq 1
+    colZorro                resq 1
+    movActual               resb 1
 
 section .text
 
@@ -208,23 +211,168 @@ esZorro:
     mov     al,[simboloZorro]
     ret
 
-;   recibe en rdi la posicion de inicio del tablero
-;   actualiza el vector movimientosPosibles con los movimientos posibles para el zorro
-;   movimientos posibles:
-;   1: arriba izq, 2: arriba, 3: arriba der
-;   4: izquierda ,          , 6: derecha
-;   7: abajo  izq, 8: abajo , 9: abajo  der
-;   si el número almacenado es positivo, es un movimiento común.
-;   si es negativo, es un movimiento para comer una oca.
-CalcularMovimientosZorro:
-    mov     [dirTablero],rdi
-    add     rdi,69 ; rdi ahora apunta al primer elemento del vector movimientosPosibles
-    mov     [dirVectMovimientos],rdi
-
 VerificarMovimientoOcas:
 ; Falta implementar
     ret
 
 VerificarMovimientoZorro:
 ; Falta implementar
+    ret
+
+; rdi = tablero
+CalcularMovimientosZorro:
+    mov     [dirTablero],rdi
+    sub     rsp,8
+    call    buscarZorro
+    add     rsp,8
+    mov     [filaZorro],rax
+    mov     [colZorro],rbx
+
+    mov     rdi,[dirTablero]
+    add     rdi,62              
+    ; rdi = movimientosPosibles
+    mov     [dirVectMovimientos],rdi
+
+    mov     qword[iteradorFila],-1
+    mov     qword[iteradorCol],-1
+    mov     byte[movActual],1
+
+movimientoFilaBucle:
+    cmp     qword[iteradorCol],1
+    jg      movimientoProxFila
+
+    ; rax = (c + j)
+    mov     rax,qword[colZorro]
+    add     rax,qword[iteradorCol]
+
+    ; si salgo de la matriz, sig movimiento
+    cmp     rax,0
+    jl      calcProxMov
+    cmp     rax,6
+    jg      calcProxMov
+
+    imul    rax,qword[longitudElemento]
+    
+    ; rbx = (f + i)
+    mov     rbx,qword[filaZorro]
+    add     rbx,qword[iteradorFila]
+    
+    ; si salgo de la matriz, sig fila
+    cmp     rbx,0
+    jl      movimientoProxFila
+    cmp     rbx,6
+    jg      movimientoProxFila
+
+    imul    rbx,qword[longitudFila]
+
+    add     rax,rbx
+    add     rax,[dirTablero]
+    mov     bl,byte[rax]
+
+    mov     rdi,mostrarInt
+    mov     rsi,0
+    mov     sil,bl
+    sub     rsp,8
+    call    printf
+    add     rsp,8
+
+    cmp     bl,0
+    jne     verSiComeOca
+    
+    ; hay un movimiento que no come oca
+    mov     rbx,[dirVectMovimientos]
+    mov     al,byte[movActual]
+    mov     byte[rbx],al
+    ; rax = (f + i)
+    mov     rax,qword[filaZorro]
+    add     rax,qword[iteradorFila]
+    mov     byte[rbx+1],al
+    ; rax = (c + j)
+    mov     rax,qword[colZorro]
+    add     rax,qword[iteradorCol]  
+    mov     byte[rbx+2],al
+
+    mov     byte[rbx+3],0
+
+    mov     rax,[dirVectMovimientos]
+    add     rax,4
+    mov     [dirVectMovimientos],rax
+    jmp     calcProxMov
+
+verSiComeOca:
+    cmp     bl,1
+    jne     calcProxMov
+
+    ; rax = j*2 + c
+    mov     rax,qword[iteradorCol]
+    imul    rax,2
+    add     rax,qword[colZorro]
+
+    ; si salgo de la matriz, sig movimiento
+    cmp     rax,0
+    jl      calcProxMov
+    cmp     rax,6
+    jg      calcProxMov
+
+    imul    rax,qword[longitudElemento]
+
+    ; rbx = i*2 + f
+    mov     rbx,qword[iteradorFila]
+    imul    rbx,2
+    add     rbx,qword[filaZorro]
+
+    ; si salgo de la matriz, sig fila
+    cmp     rbx,0
+    jl      movimientoProxFila
+    cmp     rbx,6
+    jg      movimientoProxFila
+
+
+    imul    rbx,qword[longitudFila]
+        
+    add     rax,rbx
+    add     rax,[dirTablero]
+    mov     bl,byte[rax]
+    cmp     bl,0
+    jne     calcProxMov
+    ; hay un movimiento que si come oca
+    mov     rbx,[dirVectMovimientos]
+    mov     al,byte[movActual]
+    mov     byte[rbx],al
+    ; rbx = (f + 2i)
+    mov     rax,0
+    mov     rax,qword[iteradorFila]
+    imul    rax,2
+    add     rax,qword[filaZorro]
+    mov     byte[rbx+1],al
+    ; rax = (c + 2j)
+    mov     rax,0
+    mov     rax,qword[iteradorCol] 
+    imul    rax,2
+    add     rax,qword[colZorro]
+    mov     byte[rbx+2],al
+
+    mov     byte[rbx+3],1
+
+    mov     rax,[dirVectMovimientos]
+    add     rax,4
+    mov     [dirVectMovimientos],rax
+
+    jmp     calcProxMov
+
+calcProxMov:
+    inc     qword[iteradorCol]
+    inc     byte[movActual]
+    jmp     movimientoFilaBucle
+movimientoProxFila:
+    inc     qword[iteradorFila]
+    cmp     qword[iteradorFila],1
+    jg      finCalcMovimientos
+    
+    mov     qword[iteradorCol],-1
+    jmp     movimientoFilaBucle
+
+finCalcMovimientos:
+    mov     rbx,[dirVectMovimientos]
+    mov     byte[rbx],-1
     ret
