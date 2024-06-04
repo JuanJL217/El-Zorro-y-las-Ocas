@@ -172,6 +172,7 @@ cargarPartida:
     mov             qword[idArchivoGuardado],rax
     mov             rdi,registroDatosPartida
     mov             rsi,94
+    # No faltaria un mov rdx,1 aca?
     mov             rcx,[idArchivoGuardado]
     sub             rsp,8
     call            fread
@@ -269,6 +270,8 @@ personalizarOcas:
     Mprintf     mensajeIngresarSimboloOcas
 ocasIngresarOpcion:
     Mgets           inputBuffer
+    # Esto es una validacion, tal vez deberia estar en el modulo de validaciones
+
     ; Si se ingresa el mismo símbolo que para el zorro, es inválido
     mov             al,[simboloZorro]
     cmp             al,[inputBuffer]
@@ -289,6 +292,8 @@ personalizarZorro:
     Mprintf     mensajeIngresarSimboloZorro
 zorroIngresarOpcion:
     Mgets           inputBuffer
+    # Igual que las ocas esto deberia estar en validacion
+
     ; Si se ingresa el mismo símbolo que para las ocas, es inválido
     mov             al,[simboloOcas]
     cmp             al,[inputBuffer]
