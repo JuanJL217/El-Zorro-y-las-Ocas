@@ -1,0 +1,58 @@
+f,c = buscarZorro(tablero)
+
+O - -
+- X -
+- - -
+if tablero[f-1][c-1] == 0:
+	agregarMovimiento(1, f-1, c-1, 0)		// no come oca
+if tablero[f-1][c-1] == 1 && tablero[f-2][c-2] == 0:
+	agregarMovimiento(1, f-2, c-2, 1)		// come oca
+- O -
+- X -
+- - -
+if tablero[f-1][c] == 0:
+	agregarMovimiento(2, f-1, c, 0)			// no come oca
+if tablero[f-1][c] == 1 && tablero[f-2][c-2] == 0:
+	agregarMovimiento(2, f-2, c, 1)			// come oca
+- - O
+- X -
+- - -
+if tablero[f-1][c+1] == 0:
+	agregarMovimiento(3, f-1, c+1, 0)		// no come oca
+if tablero[f-1][c+1] == 1 && tablero[f-2][c+2] == 0:
+	agregarMovimiento(3, f-2, c+2, 1)		// come oca
+- - -
+O X -
+- - -
+if tablero[f][c-1] == 0:
+	agregarMovimiento(4, f-1, c-1, 0)
+if tablero[f][c-1] == 1 && tablero[f-2][c-2] == 0:
+	agregarMovimiento(4, f-2, c-2, 1)
+- - -
+- X O
+- - -
+if tablero[f][c+1] == 0:
+	agregarMovimiento(6, f-1, c+1, 0)
+if tablero[f][c+1] == 1 && tablero[f-2][c+2] == 0:
+	agregarMovimiento(6, f-2, c+2, 1)
+- - -
+- X -
+O - -
+if tablero[f+1][c-1] == 0:
+	agregarMovimiento(7, f+1, c-1, 0)		// no come oca
+if tablero[f+1][c-1] == 1 && tablero[f+2][c-2] == 0:
+	agregarMovimiento(7, f+2, c-2, 1)		// come oca
+- - -
+- X -
+- O -
+if tablero[f+1][c] == 0:
+	agregarMovimiento(8, f+1, c, 0)			// no come oca
+if tablero[f+1][c] == 1 && tablero[f+2][c-2] == 0:
+	agregarMovimiento(8, f+2, c, 1)			// come oca
+- - -
+- X -
+- - O
+if tablero[f+1][c+1] == 0:
+	agregarMovimiento(9, f+1, c+1, 0)		// no come oca
+if tablero[f+1][c+1] == 1 && tablero[f+2][c+2] == 0:
+	agregarMovimiento(9, f-2, c+2, 1)		// come oca
