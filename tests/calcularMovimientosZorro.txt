@@ -75,7 +75,11 @@ j = -1
 	movAct++
 i++
 
+Luego, para recuperar la posición de la oca comida se puede hacer:
+[ (f,c) + (f+2i,c+2i) ] // 2 = (f+i,c+i)
 
+(posZorro + nuevaPosZorro) / 2 = posOcaComida
+(solo si el movimiento come una oca)
 
 
 

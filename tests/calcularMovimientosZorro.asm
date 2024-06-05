@@ -11,9 +11,25 @@
     call    printf
     add     rsp,8
 %endmacro
+%macro Mgets 1
+    mov     rdi,%1
+    sub     rsp,8
+    call    gets
+    add     rsp,8
+%endmacro
+%macro Msscanf 3
+    mov     rdi,%1    ; (char*) inputStr 
+    mov     rsi,%2    ; (char*) format
+    mov     rdx,%3    ; (num*) numeroGuardar <- longitud debe coincidir con format
+    sub     rsp,8
+    call    sscanf
+    add     rsp,8
+%endmacro
 
 global main
 extern printf
+extern gets
+extern sscanf
 
 section .data
     ; -1 espacios inaccesibles | 0 espacio | 1 oca | 2 zorro 
@@ -21,12 +37,13 @@ section .data
     tableroNorte1               db -1,-1, 1, 1, 1,-1,-1
     tableroNorte2               db  1, 1, 1, 1, 1, 1, 1
     tableroNorte3               db  1, 0, 0, 0, 0, 0, 1
-    tableroNorte4               db  1, 0, 0, 2, 0, 0, 1
+    tableroNorte4               db  1, 0, 1, 2, 0, 0, 1
     tableroNorte5               db -1,-1, 0, 0, 0,-1,-1
     tableroNorte6               db -1,-1, 0, 0, 0,-1,-1
 
 
     repZorro                    db 2
+    repEspacio                  db 0
 
     longitudFila                dq 7
     longitudElemento            dq 1
@@ -42,7 +59,8 @@ section .data
     mostrarFila             db " %li ",0
     mostrarMovimientoPosible db "nro: %hhi , fil: %hhi , col: %hhi , come oca?: %hhi",10,0
     mostrarBL               db "BL: %hhi - -",0
-    mostrarPosZorro         db "filaZorro: %li colZorro: %li",10,0                
+    mostrarPosZorro         db "filaZorro: %li colZorro: %li",10,0
+    formatoIntByte          db "%hhi",0
     ; ANSI
     ANSIBoldOn              db 27,"[1m",0
     ANSIBoldOff             db 27,"[22m",0
@@ -65,6 +83,7 @@ section .bss
     ; (nroMov, filMov, colMov, comeOca?)
     ; (nroMov, filMov, colMov, comeOca?)
 
+    inputBuffer             resb 100
     movActual               resb 1
     iterador                resq 1
     fila                    resq 1
@@ -75,6 +94,7 @@ section .bss
     filaZorro               resq 1
     colZorro                resq 1
     acumuladorBL            resb 10
+    movIngresado            resb 1
 
 section .text
 
@@ -93,27 +113,6 @@ copiarTableroBucle:
 
 copiarTableroFin:
     
-mostrarResultadoAntes:
-    cmp     qword[iterador],8
-    jge     finMostrar
-    
-    mov     rax,[iterador]
-    imul    rax,4
-    add     rax,movimientosPosibles
-
-    mov     rdi,mostrarMovimientoPosible
-    mov     rsi,[rax]
-    mov     rdx,[rax+1]
-    mov     rcx,[rax+2]
-    mov     r8,[rax+3]
-    sub     rsp,8
-    call    printf
-    add     rsp,8
-
-    inc     qword[iterador]
-    jmp     mostrarResultadoAntes
-finMostrar:
-
     mov     rdi,tablero
     sub     rsp,8
     call    CalcularMovimientosZorro
@@ -126,7 +125,7 @@ finMostrar:
     mov     qword[iterador],0
 mostrarResultado:
     cmp     qword[iterador],8
-    jge     finPrograma
+    jge     pedirMovimiento
     
     mov     rax,[iterador]
     imul    rax,4
@@ -143,6 +142,28 @@ mostrarResultado:
 
     inc     qword[iterador]
     jmp     mostrarResultado
+
+pedirMovimiento:
+    Mgets   inputBuffer
+    Msscanf inputBuffer,formatoIntByte,movIngresado
+    ; aca hay que validar que sea un movimiento valido
+    
+    mov     rdi,tablero
+    sub     rsp,8
+    call    MostrarTablero
+    add     rsp,8
+    
+    mov     rdi,tablero
+    mov     sil,[movIngresado]
+    sub     rsp,8
+    call    RealizarMovimientoZorro
+    add     rsp,8
+
+    mov     rdi,tablero
+    sub     rsp,8
+    call    MostrarTablero
+    add     rsp,8
+
 finPrograma:
 
     ret
@@ -156,7 +177,6 @@ CalcularMovimientosZorro:
     mov     [filaZorro],rax
     mov     [colZorro],rbx
 
-    mov     rdi,[dirTablero]
     add     rdi,62              
     ; rdi = movimientosPosibles
     mov     [dirVectMovimientos],rdi
@@ -312,15 +332,122 @@ finCalcMovimientos:
     mov     byte[rbx],-1
     ret
 
+; rdi = tablero
+; sil = nroMov
+; si NO comio una oca, devuelve 0 en rax
+; si comio una oca, actualiza ocasComidas y devuelve en rax 1 
+RealizarMovimientoZorro:
+    mov     [dirTablero],rdi
+    sub     rsp,8
+    call    buscarZorro
+    add     rsp,8
+    mov     [filaZorro],rax
+    mov     [colZorro],rbx
 
+    add     rdi,62              
+    mov     [dirVectMovimientos],rdi
 
-acumularBL:
-    mov     r9,0
-    mov     r9b,byte[movActual]
-    dec     r9b
-    add     r9,acumuladorBL
-    mov     [r9],bl
+    mov     qword[iterador],0
+
+buscarMovEnMovPosibles:
+    cmp     qword[iterador],7
+    je      movNoPosible    ; (No debería pasar nunca)
+
+    mov     rax,[iterador]
+    imul    rax,4           ; long. de elemento de vectorMovimientos
+    add     rax,[dirVectMovimientos]
+    mov     bl,byte[rax]    ; bl = nro de mov posible
+    cmp     bl,-1
+    je      movNoPosible    ; (No debería pasar nunca)
+    cmp     bl,sil
+    je      movEncontrado
+
+    inc     qword[iterador]
+    jmp     buscarMovEnMovPosibles
+
+movNoPosible:
     ret
+
+movEncontrado:
+    ; guardo la posición del movimiento actual
+    mov     [dirVectMovimientos],rax
+
+    ; saco el zorro de su posición anterior.
+    mov     r8,[filaZorro] ;fila guardada como qword
+    imul    r8,[longitudFila]
+    mov     r9,[colZorro] ;columna guardada como qword
+    imul    r9,[longitudElemento]
+    add     r8,r9
+    add     r8,tablero
+
+    mov     al,byte[repEspacio]
+    mov     byte[r8],al ; dejo un espacio en la posición del zorro
+
+    ; pongo el zorro en la nueva posición.
+    mov     rax,[dirVectMovimientos]
+    mov     r8,0
+    mov     r8b,[rax+1]         ;fila guardada como byte
+    imul    r8,[longitudFila]
+    mov     r9,0
+    mov     r9b,[rax+2]          ;columna guardada como byte
+    imul    r9,[longitudElemento]
+    add     r8,r9
+    add     r8,tablero
+
+    mov     bl,byte[repZorro]
+    mov     byte[r8],bl
+
+    ; verifico si fue un movimiento para comer una oca
+    ; si lo fue, remuevo la oca de su lugar e incremento
+    ; la variable ocasComidas
+    mov     r11b,[rax+3]
+    cmp     r11b,0        ; 1=movComerOca 0=movNormal
+    je      finRealizarMovimiento
+    ; calculo la posicion de la oca comida como
+    ; (anteriorPosZorro + nuevaPosZorro) / 2
+    mov     rax,[dirVectMovimientos]
+    mov     r8,0
+    mov     r8b,[rax+1]
+    add     r8,[filaZorro]
+
+    mov     rdx,0
+    mov     rax,r8
+    mov     r10,2
+    idiv    r10
+    mov     r8,rax
+
+    imul    r8,[longitudFila]
+
+    mov     rax,[dirVectMovimientos]
+    mov     r9,0
+    mov     r9b,[rax+2]
+    add     r9,[colZorro]
+
+    mov     rdx,0
+    mov     rax,r9
+    mov     r10,2
+    idiv    r10
+    mov     r9,rax
+
+    imul    r9,[longitudElemento]
+    add     r8,r9
+    add     r8,tablero
+
+    mov     bl,byte[repEspacio]
+    mov     byte[r8],bl
+
+    mov     rax,[dirTablero]
+    add     rax,53 ; rax = dirOcasComidas
+    mov     bl,byte[rax]
+    inc     bl
+    mov     byte[rax],bl
+
+finRealizarMovimiento:
+    mov     rax,0
+    mov     al,r11b
+    ret
+
+
 
 
 
@@ -365,4 +492,106 @@ buscarZorroNoEncontrado:
 buscarZorroEncontrado:
     mov     rbx,[iteradorCol]
     mov     rax,[iteradorFila]
+    ret
+
+
+
+
+; recibe en rdi la direccion del tablero
+;
+MostrarTablero:
+    mov     [dirTablero],rdi
+    add     rdi,50 ; simbolo ocas
+    mov     al,[rdi]
+    mov     [simboloOcas],al
+    add     rdi,1 ; simbolo zorro
+    mov     al,[rdi]
+    mov     [simboloZorro],al
+
+    Mprintf ANSIColorMarco
+    Mprintf mostrarLineaColumnas
+    Mprintf ANSIResetColor
+                                            ; marco las líneas que se pueden copiar y pegar para hacer
+    mov     qword[iteradorFila],0           ; la estructura de un loop que itera sobre todo el tablero
+    mov     qword[iteradorCol],0            ;
+    Mprintf ANSIColorMarco
+    mov     r8,[iteradorFila]
+    inc     r8
+    Mprintf mostrarFila,r8
+    Mprintf ANSIResetColor
+
+mostrarTableroLoop:
+    cmp     qword[iteradorCol],7            ;
+    jge     mostrarTableroProximaFila       ;
+    mov     rax,qword[longitudElemento]
+    imul    rax,qword[iteradorCol]
+
+    mov     rbx,qword[longitudFila]
+    imul    rbx,qword[iteradorFila]
+
+    add     rax,rbx
+    add     rax,[dirTablero]
+                                            ; aqui ingresar lógica para cada elemento del tablero
+                                            ; el elemento está cargado en el registro bl
+    mov     bl,byte[rax]
+    sub     rsp,8
+    call    identificarSimbolo
+    add     rsp,8
+
+    Mprintf mostrarElemento,rax
+
+    inc     qword[iteradorCol]              ;
+    jmp     mostrarTableroLoop              ;
+
+mostrarTableroProximaFila:                  ;
+    Mprintf ANSIColorMarco
+    mov     r8,[iteradorFila]
+    inc     r8
+    Mprintf mostrarFila,r8
+    Mprintf ANSIResetColor
+    Mprintf nuevaLinea
+
+    inc     qword[iteradorFila]             ;
+    mov     qword[iteradorCol],0            ;
+
+    cmp     qword[iteradorFila],7           ;
+    jge     mostrarTableroFin               ;
+
+    Mprintf ANSIColorMarco
+    mov     r8,[iteradorFila]
+    inc     r8
+    Mprintf mostrarFila,r8
+    Mprintf ANSIResetColor
+
+    jmp     mostrarTableroLoop              ;
+
+mostrarTableroFin:
+    Mprintf ANSIColorMarco
+    Mprintf mostrarLineaColumnas
+    Mprintf ANSIResetColor
+    ret
+
+;   en bl está el código del elemento en tablero
+;   devuelve en al el caracter que representa ese elemento
+identificarSimbolo:
+    mov     rax,0
+    cmp     bl,-1
+    je      esInaccesible
+    cmp     bl,0
+    je      esEspacio
+    cmp     bl,1
+    je      esOca
+    cmp     bl,2
+    je      esZorro
+esInaccesible:
+    mov     al,35
+    ret
+esEspacio:
+    mov     al,32
+    ret
+esOca:
+    mov     al,79
+    ret
+esZorro:
+    mov     al,88
     ret

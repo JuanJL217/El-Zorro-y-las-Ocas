@@ -17,6 +17,8 @@ global MostrarTablero
 global VerificarMovimientoOcas
 global VerificarMovimientoZorro
 global ContarOcas
+global CalcularMovimientosZorro
+global RealizarMovimientoZorro
 
 extern printf
 
@@ -228,7 +230,6 @@ CalcularMovimientosZorro:
     mov     [filaZorro],rax
     mov     [colZorro],rbx
 
-    mov     rdi,[dirTablero]
     add     rdi,62              
     ; rdi = movimientosPosibles
     mov     [dirVectMovimientos],rdi
@@ -375,4 +376,120 @@ movimientoProxFila:
 finCalcMovimientos:
     mov     rbx,[dirVectMovimientos]
     mov     byte[rbx],-1
+    ret
+
+; rdi = tablero
+; sil = nroMov
+; si NO comio una oca, devuelve 0 en rax
+; si comio una oca, actualiza ocasComidas y devuelve en rax 1 
+RealizarMovimientoZorro:
+    mov     [dirTablero],rdi
+    sub     rsp,8
+    call    buscarZorro
+    add     rsp,8
+    mov     [filaZorro],rax
+    mov     [colZorro],rbx
+
+    add     rdi,62              
+    mov     [dirVectMovimientos],rdi
+
+    mov     qword[iterador],0
+
+buscarMovEnMovPosibles:
+    cmp     qword[iterador],7
+    je      movNoPosible    ; (No debería pasar nunca)
+
+    mov     rax,[iterador]
+    imul    rax,4           ; long. de elemento de vectorMovimientos
+    add     rax,[dirVectMovimientos]
+    mov     bl,byte[rax]    ; bl = nro de mov posible
+    cmp     bl,-1
+    je      movNoPosible    ; (No debería pasar nunca)
+    cmp     bl,sil
+    je      movEncontrado
+
+    inc     qword[iterador]
+    jmp     buscarMovEnMovPosibles
+
+movNoPosible:
+    ret
+
+movEncontrado:
+    ; guardo la posición del movimiento actual
+    mov     [dirVectMovimientos],rax
+
+    ; saco el zorro de su posición anterior.
+    mov     r8,[filaZorro] ;fila guardada como qword
+    imul    r8,[longitudFila]
+    mov     r9,[colZorro] ;columna guardada como qword
+    imul    r9,[longitudElemento]
+    add     r8,r9
+    add     r8,tablero
+
+    mov     al,byte[repEspacio]
+    mov     byte[r8],al ; dejo un espacio en la posición del zorro
+
+    ; pongo el zorro en la nueva posición.
+    mov     rax,[dirVectMovimientos]
+    mov     r8,0
+    mov     r8b,[rax+1]         ;fila guardada como byte
+    imul    r8,[longitudFila]
+    mov     r9,0
+    mov     r9b,[rax+2]          ;columna guardada como byte
+    imul    r9,[longitudElemento]
+    add     r8,r9
+    add     r8,tablero
+
+    mov     bl,byte[repZorro]
+    mov     byte[r8],bl
+
+    ; verifico si fue un movimiento para comer una oca
+    ; si lo fue, remuevo la oca de su lugar e incremento
+    ; la variable ocasComidas
+    mov     r11b,[rax+3]
+    cmp     r11b,0        ; 1=movComerOca 0=movNormal
+    je      finRealizarMovimiento
+    ; calculo la posicion de la oca comida como
+    ; (anteriorPosZorro + nuevaPosZorro) / 2
+    mov     rax,[dirVectMovimientos]
+    mov     r8,0
+    mov     r8b,[rax+1]
+    add     r8,[filaZorro]
+
+    mov     rdx,0
+    mov     rax,r8
+    mov     r10,2
+    idiv    r10
+    mov     r8,rax
+
+    imul    r8,[longitudFila]
+
+    mov     rax,[dirVectMovimientos]
+    mov     r9,0
+    mov     r9b,[rax+2]
+    add     r9,[colZorro]
+
+    mov     rdx,0
+    mov     rax,r9
+    mov     r10,2
+    idiv    r10
+    mov     r9,rax
+
+    imul    r9,[longitudElemento]
+    add     r8,r9
+    add     r8,tablero
+
+    mov     bl,byte[repEspacio]
+    mov     byte[r8],bl
+
+    mov     rax,[dirTablero]
+    add     rax,53 ; rax = dirOcasComidas
+    mov     bl,byte[rax]
+    inc     bl
+    mov     byte[rax],bl
+
+finRealizarMovimiento:
+    mov     rax,0
+    mov     al,r11b
+
     ret
