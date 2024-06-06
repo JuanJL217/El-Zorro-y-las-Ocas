@@ -3,17 +3,19 @@ f = fila del zorro
 c = col del zorro
 
 i = -1
-movAct = 1
+movAct = 1 		// es el identificador del movimiento (lo q se muestra por pantalla)
 loop mientras i<2
-j = -1
+	j = -1
+	
 	loop mientras j<2
-	if tablero[f+i][c+j] == 0:
-		agregarMov(movAct,f+i,c+j,0)
-	else if tablero[f+i][c+j] == 1 && tablero[f+2*i][c+2*j] == 0:
-		agregarMov(movAct,f+2i,c+2j,1)
-	j++
+		if tablero[f+i][c+j] == 0:
+			agregarMov(movAct,f+i,c+j,0)
+		else if tablero[f+i][c+j] == 1 && tablero[f+2*i][c+2*j] == 0:
+			agregarMov(movAct,f+2i,c+2j,1)
+		j++
+	
 	movAct++
-i++
+	i++
 
 Luego, para recuperar la posición de la oca comida se puede hacer:
 [ (f,c) + (f+2i,c+2i) ] // 2 = (f+i,c+i)
