@@ -1,0 +1,39 @@
+
+f = fila del zorro
+c = col del zorro
+
+i = -1
+movAct = 1 		// es el identificador del movimiento (lo q se muestra por pantalla)
+loop mientras i<2
+	j = -1
+	
+	loop mientras j<2
+		if tablero[f+i][c+j] == 0: // si hay un espacio, el zorro puede moverse ahi
+			agregarMov(movAct,f+i,c+j,0)
+		else if tablero[f+i][c+j] == 1 && tablero[f+2*i][c+2*j] == 0: // si hay una oca, y detrás de la oca hay un espacio, el zorro puede comer
+			agregarMov(movAct,f+2i,c+2j,1)
+		j++
+	
+	movAct++
+	i++
+
+Luego, para recuperar la posición de la oca comida se puede hacer:
+[ (f,c) + (f+2i,c+2i) ] // 2 = (f+i,c+i)
+
+(posZorro + nuevaPosZorro) / 2 = posOcaComida
+(solo si el movimiento come una oca)
+
+
+
+1 2 3
+4 X 6
+7 8 9
+
+
+# # O o O # #
+# # O O O # #
+O O O O O O O
+o   1 2 3   O
+O   4 X 6   O
+# # 7 8 9 # #
+# #       # #

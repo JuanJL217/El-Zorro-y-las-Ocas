@@ -11,54 +11,96 @@
     call    printf
     add     rsp,8
 %endmacro
+%macro Mgets 1
+    mov     rdi,%1
+    sub     rsp,8
+    call    gets
+    add     rsp,8
+%endmacro
+%macro Msscanf 3
+    mov     rdi,%1    ; (char*) inputStr 
+    mov     rsi,%2    ; (char*) format
+    mov     rdx,%3    ; (num*) numeroGuardar <- longitud debe coincidir con format
+    sub     rsp,8
+    call    sscanf
+    add     rsp,8
+%endmacro
 
-global CopiarTablero
-global MostrarTablero
-global VerificarMovimientoOcas
-global VerificarMovimientoZorro
-global ContarOcas
-global CalcularMovimientosZorro
-global RealizarMovimientoZorro
-
+global main
 extern printf
+extern gets
+extern sscanf
 
 section .data
-    ; como se representan diferentes elementos en el tablero
-    repZorro                db 2
-    repOcas                 db 1
-    repEspacio              db 0
-    simboloEspacio          db " "
-    simboloInaccesible      db "#"
+    ; -1 espacios inaccesibles | 0 espacio | 1 oca | 2 zorro 
+    tableroNorte                db -1,-1, 1, 1, 1,-1,-1
+    tableroNorte1               db -1,-1, 1, 1, 1,-1,-1
+    tableroNorte2               db  1, 1, 1, 1, 1, 1, 1
+    tableroNorte3               db  1, 0, 0, 0, 0, 0, 1
+    tableroNorte4               db  1, 0, 1, 2, 0, 0, 1
+    tableroNorte5               db -1,-1, 0, 0, 0,-1,-1
+    tableroNorte6               db -1,-1, 0, 0, 0,-1,-1
 
-    longitudFila            dq 7
-    longitudElemento        dq 1
 
+    repZorro                    db 2
+    repEspacio                  db 0
+
+    longitudFila                dq 7
+    longitudElemento            dq 1
+    newLine                     db 10,0
+    mostrarInt                  db "%hhi ",0
+    simboloEspacio              db ' '
+    simboloZorro                db 'X'
+    simboloOcas                 db 'O'
+    simboloInaccesible          db '#'
     nuevaLinea              db 10,0
     mostrarLineaColumnas    db "[ ] 1  2  3  4  5  6  7 [ ]",10,0
     mostrarElemento         db " %c ",0
     mostrarFila             db " %li ",0
-
+    mostrarMovimientoPosible db "nro: %hhi , fil: %hhi , col: %hhi , come oca?: %hhi",10,0
+    mostrarBL               db "BL: %hhi - -",0
+    mostrarPosZorro         db "filaZorro: %li colZorro: %li",10,0
+    formatoIntByte          db "%hhi",0
     ; ANSI
     ANSIBoldOn              db 27,"[1m",0
     ANSIBoldOff             db 27,"[22m",0
     ANSIResetColor          db 27,"[0m",0
     ANSIColorMarco          db 27,"[38;5;88m",0
 
+
 section .bss
+    tablero                 times 7 resb 7
+    orientacion             resb 1 ; es un char ascii
+    simboloOcasC            resb 1 ; es un char ascii
+    simboloZorroC           resb 1 ; es un char ascii
+    turnoActual             resb 1 ; es un número (0 Ocas ; 1 Zorro)
+    ocasComidas             resb 1 ; es un número (0, 1, 2, ...)
+    estadisticasZorro       times 8 resb 1 ; vector de 8 posiciones - una por cada dirección del zorro
+    movimientosPosibles     times 8 resb 4 ; vector de 8 elementos, cada uno con 4 valores - una por cada dirección posible
+    ; (nroMov, filMov, colMov, comeOca?)
+    ; (nroMov, filMov, colMov, comeOca?)
+    ; (nroMov, filMov, colMov, comeOca?)
+    ; (nroMov, filMov, colMov, comeOca?)
+    ; (nroMov, filMov, colMov, comeOca?)
+
+    inputBuffer             resb 100
+    movActual               resb 1
+    iterador                resq 1
+    fila                    resq 1
     iteradorFila            resq 1
     iteradorCol             resq 1
     dirTablero              resq 1
     dirVectMovimientos      resq 1
-    simboloZorro            resb 1
-    simboloOcas             resb 1
     filaZorro               resq 1
     colZorro                resq 1
-    movActual               resb 1
+    acumuladorBL            resb 10
+    movIngresado            resb 1
 
 section .text
 
-; copia los 49 bytes comenzando por la direccion en rsi (source)
-; a los 49 bytes comenzando por la direccion en rdi (destintation)
+main:
+    mov     rsi,tableroNorte
+    mov     rdi,tablero
 CopiarTablero:
     mov     rcx,0
 copiarTableroBucle:
@@ -68,157 +110,62 @@ copiarTableroBucle:
     mov     [rdi+rcx],dh
     inc     rcx
     jmp     copiarTableroBucle
+
 copiarTableroFin:
-    ret
-
-; busca la posición del zorro en el tablero que incia en la direccion rdi
-; devuelve la fila en rax y la columna en rbx
-; devuelve valores para usar directamente en código, es decir números entre 0 y 6
-; si no se encuentra el zorro, devuelve -1 en rax (no debería pasar nunca)
-buscarZorro:
-    mov     qword[iteradorFila],0
-    mov     qword[iteradorCol],0
-buscarZorroBucle:
-    cmp     qword[iteradorCol],7
-    jge     buscarZorroProximaFila
-
-    mov     rax,qword[longitudElemento]
-    imul    rax,qword[iteradorCol]
-
-    mov     rbx,qword[longitudFila]
-    imul    rbx,qword[iteradorFila]
-
-    add     rax,rbx
-    add     rax,rdi
-
-    mov     bl,byte[rax]
-    cmp     bl,[repZorro]
-    je      buscarZorroEncontrado
-
-    inc     qword[iteradorCol]
-    jmp     buscarZorroBucle
-
-buscarZorroProximaFila:
-    cmp     qword[iteradorFila],7
-    jge     buscarZorroNoEncontrado
-    inc     qword[iteradorFila]
-    mov     qword[iteradorCol],0
-    jmp     buscarZorroBucle
-
-buscarZorroNoEncontrado:
-    mov     rax,-1
-    ret
     
-buscarZorroEncontrado:
-    mov     rbx,[iteradorCol]
-    mov     rax,[iteradorFila]
-    ret
-
-; recibe en rdi la direccion del tablero
-;
-MostrarTablero:
-    mov     [dirTablero],rdi
-    add     rdi,50 ; simbolo ocas
-    mov     al,[rdi]
-    mov     [simboloOcas],al
-    add     rdi,1 ; simbolo zorro
-    mov     al,[rdi]
-    mov     [simboloZorro],al
-
-    Mprintf ANSIColorMarco
-    Mprintf mostrarLineaColumnas
-    Mprintf ANSIResetColor
-                                            ; marco las líneas que se pueden copiar y pegar para hacer
-    mov     qword[iteradorFila],0           ; la estructura de un loop que itera sobre todo el tablero
-    mov     qword[iteradorCol],0            ;
-    Mprintf ANSIColorMarco
-    mov     r8,[iteradorFila]
-    inc     r8
-    Mprintf mostrarFila,r8
-    Mprintf ANSIResetColor
-
-mostrarTableroLoop:
-    cmp     qword[iteradorCol],7            ;
-    jge     mostrarTableroProximaFila       ;
-    mov     rax,qword[longitudElemento]
-    imul    rax,qword[iteradorCol]
-
-    mov     rbx,qword[longitudFila]
-    imul    rbx,qword[iteradorFila]
-
-    add     rax,rbx
-    add     rax,[dirTablero]
-                                            ; aqui ingresar lógica para cada elemento del tablero
-                                            ; el elemento está cargado en el registro bl
-    mov     bl,byte[rax]
+    mov     rdi,tablero
     sub     rsp,8
-    call    identificarSimbolo
+    call    CalcularMovimientosZorro
     add     rsp,8
 
-    Mprintf mostrarElemento,rax
+    mov     rdi,newLine
+    sub     rsp,8
+    call    printf
+    add     rsp,8
+    mov     qword[iterador],0
+mostrarResultado:
+    cmp     qword[iterador],8
+    jge     pedirMovimiento
+    
+    mov     rax,[iterador]
+    imul    rax,4
+    add     rax,movimientosPosibles
 
-    inc     qword[iteradorCol]              ;
-    jmp     mostrarTableroLoop              ;
+    mov     rdi,mostrarMovimientoPosible
+    mov     rsi,[rax]
+    mov     rdx,[rax+1]
+    mov     rcx,[rax+2]
+    mov     r8,[rax+3]
+    sub     rsp,8
+    call    printf
+    add     rsp,8
 
-mostrarTableroProximaFila:                  ;
-    Mprintf ANSIColorMarco
-    mov     r8,[iteradorFila]
-    inc     r8
-    Mprintf mostrarFila,r8
-    Mprintf ANSIResetColor
-    Mprintf nuevaLinea
+    inc     qword[iterador]
+    jmp     mostrarResultado
 
-    inc     qword[iteradorFila]             ;
-    mov     qword[iteradorCol],0            ;
+pedirMovimiento:
+    Mgets   inputBuffer
+    Msscanf inputBuffer,formatoIntByte,movIngresado
+    ; aca hay que validar que sea un movimiento valido
+    
+    mov     rdi,tablero
+    sub     rsp,8
+    call    MostrarTablero
+    add     rsp,8
+    
+    mov     rdi,tablero
+    mov     sil,[movIngresado]
+    sub     rsp,8
+    call    RealizarMovimientoZorro
+    add     rsp,8
 
-    cmp     qword[iteradorFila],7           ;
-    jge     mostrarTableroFin               ;
+    mov     rdi,tablero
+    sub     rsp,8
+    call    MostrarTablero
+    add     rsp,8
 
-    Mprintf ANSIColorMarco
-    mov     r8,[iteradorFila]
-    inc     r8
-    Mprintf mostrarFila,r8
-    Mprintf ANSIResetColor
+finPrograma:
 
-    jmp     mostrarTableroLoop              ;
-
-mostrarTableroFin:
-    Mprintf ANSIColorMarco
-    Mprintf mostrarLineaColumnas
-    Mprintf ANSIResetColor
-    ret
-
-;   en bl está el código del elemento en tablero
-;   devuelve en al el caracter que representa ese elemento
-identificarSimbolo:
-    mov     rax,0
-    cmp     bl,-1
-    je      esInaccesible
-    cmp     bl,0
-    je      esEspacio
-    cmp     bl,1
-    je      esOca
-    cmp     bl,2
-    je      esZorro
-esInaccesible:
-    mov     al,[simboloInaccesible]
-    ret
-esEspacio:
-    mov     al,[simboloEspacio]
-    ret
-esOca:
-    mov     al,[simboloOcas]
-    ret
-esZorro:
-    mov     al,[simboloZorro]
-    ret
-
-VerificarMovimientoOcas:
-; Falta implementar
-    ret
-
-VerificarMovimientoZorro:
-; Falta implementar
     ret
 
 ; rdi = tablero
@@ -233,6 +180,13 @@ CalcularMovimientosZorro:
     add     rdi,62              
     ; rdi = movimientosPosibles
     mov     [dirVectMovimientos],rdi
+
+    mov     rdi,mostrarPosZorro
+    mov     rsi,[filaZorro]
+    mov     rdx,[colZorro]
+    sub     rsp,8
+    call    printf
+    add     rsp,8
 
     mov     qword[iteradorFila],-1
     mov     qword[iteradorCol],-1
@@ -491,5 +445,153 @@ movEncontrado:
 finRealizarMovimiento:
     mov     rax,0
     mov     al,r11b
+    ret
 
+
+
+
+
+; busca la posición del zorro en el tablero que incia en la direccion rdi
+; devuelve la fila en rax y la columna en rbx
+; devuelve valores para usar directamente en código, es decir números entre 0 y 6
+; si no se encuentra el zorro, devuelve -1 en rax (no debería pasar nunca)
+buscarZorro:
+    mov     qword[iteradorFila],0
+    mov     qword[iteradorCol],0
+buscarZorroBucle:
+    cmp     qword[iteradorCol],7
+    jge     buscarZorroProximaFila
+
+    mov     rax,qword[longitudElemento]
+    imul    rax,qword[iteradorCol]
+
+    mov     rbx,qword[longitudFila]
+    imul    rbx,qword[iteradorFila]
+
+    add     rax,rbx
+    add     rax,rdi
+
+    mov     bl,byte[rax]
+    cmp     bl,[repZorro]
+    je      buscarZorroEncontrado
+
+    inc     qword[iteradorCol]
+    jmp     buscarZorroBucle
+
+buscarZorroProximaFila:
+    cmp     qword[iteradorFila],7
+    jge     buscarZorroNoEncontrado
+    inc     qword[iteradorFila]
+    mov     qword[iteradorCol],0
+    jmp     buscarZorroBucle
+
+buscarZorroNoEncontrado:
+    mov     rax,-1
+    ret
+    
+buscarZorroEncontrado:
+    mov     rbx,[iteradorCol]
+    mov     rax,[iteradorFila]
+    ret
+
+
+
+
+; recibe en rdi la direccion del tablero
+;
+MostrarTablero:
+    mov     [dirTablero],rdi
+    add     rdi,50 ; simbolo ocas
+    mov     al,[rdi]
+    mov     [simboloOcas],al
+    add     rdi,1 ; simbolo zorro
+    mov     al,[rdi]
+    mov     [simboloZorro],al
+
+    Mprintf ANSIColorMarco
+    Mprintf mostrarLineaColumnas
+    Mprintf ANSIResetColor
+                                            ; marco las líneas que se pueden copiar y pegar para hacer
+    mov     qword[iteradorFila],0           ; la estructura de un loop que itera sobre todo el tablero
+    mov     qword[iteradorCol],0            ;
+    Mprintf ANSIColorMarco
+    mov     r8,[iteradorFila]
+    inc     r8
+    Mprintf mostrarFila,r8
+    Mprintf ANSIResetColor
+
+mostrarTableroLoop:
+    cmp     qword[iteradorCol],7            ;
+    jge     mostrarTableroProximaFila       ;
+    mov     rax,qword[longitudElemento]
+    imul    rax,qword[iteradorCol]
+
+    mov     rbx,qword[longitudFila]
+    imul    rbx,qword[iteradorFila]
+
+    add     rax,rbx
+    add     rax,[dirTablero]
+                                            ; aqui ingresar lógica para cada elemento del tablero
+                                            ; el elemento está cargado en el registro bl
+    mov     bl,byte[rax]
+    sub     rsp,8
+    call    identificarSimbolo
+    add     rsp,8
+
+    Mprintf mostrarElemento,rax
+
+    inc     qword[iteradorCol]              ;
+    jmp     mostrarTableroLoop              ;
+
+mostrarTableroProximaFila:                  ;
+    Mprintf ANSIColorMarco
+    mov     r8,[iteradorFila]
+    inc     r8
+    Mprintf mostrarFila,r8
+    Mprintf ANSIResetColor
+    Mprintf nuevaLinea
+
+    inc     qword[iteradorFila]             ;
+    mov     qword[iteradorCol],0            ;
+
+    cmp     qword[iteradorFila],7           ;
+    jge     mostrarTableroFin               ;
+
+    Mprintf ANSIColorMarco
+    mov     r8,[iteradorFila]
+    inc     r8
+    Mprintf mostrarFila,r8
+    Mprintf ANSIResetColor
+
+    jmp     mostrarTableroLoop              ;
+
+mostrarTableroFin:
+    Mprintf ANSIColorMarco
+    Mprintf mostrarLineaColumnas
+    Mprintf ANSIResetColor
+    ret
+
+;   en bl está el código del elemento en tablero
+;   devuelve en al el caracter que representa ese elemento
+identificarSimbolo:
+    mov     rax,0
+    cmp     bl,-1
+    je      esInaccesible
+    cmp     bl,0
+    je      esEspacio
+    cmp     bl,1
+    je      esOca
+    cmp     bl,2
+    je      esZorro
+esInaccesible:
+    mov     al,35
+    ret
+esEspacio:
+    mov     al,32
+    ret
+esOca:
+    mov     al,79
+    ret
+esZorro:
+    mov     al,88
     ret
