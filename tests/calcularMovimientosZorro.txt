@@ -8,9 +8,9 @@ loop mientras i<2
 	j = -1
 	
 	loop mientras j<2
-		if tablero[f+i][c+j] == 0:
+		if tablero[f+i][c+j] == 0: // si hay un espacio, el zorro puede moverse ahi
 			agregarMov(movAct,f+i,c+j,0)
-		else if tablero[f+i][c+j] == 1 && tablero[f+2*i][c+2*j] == 0:
+		else if tablero[f+i][c+j] == 1 && tablero[f+2*i][c+2*j] == 0: // si hay una oca, y detrás de la oca hay un espacio, el zorro puede comer
 			agregarMov(movAct,f+2i,c+2j,1)
 		j++
 	
