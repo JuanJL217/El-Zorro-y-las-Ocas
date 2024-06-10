@@ -33,7 +33,7 @@ ValidarMenu:
     cmp     al,[bufferEntradaValidar]
     je      menuEligeNuevaPartida
 
-# Eliminar esto??
+; Eliminar esto??
 menuOpcionInvalida:
     mov     rax,-1
     ret
@@ -48,10 +48,10 @@ menuEligeNuevaPartida:
 
 
 ValidarPersonalizacion:
-# es necesario este corchete??
+; es necesario este corchete??
     mov     rax,[rdi]
     mov     [bufferEntradaValidar],rax
-# Creo que se puede mejorar esto moviendo  BufferEntradaValidar al "al"
+; Creo que se puede mejorar esto moviendo  BufferEntradaValidar al "al"
     mov     al,[personalizacionOrientacion]
     cmp     al,[bufferEntradaValidar]
     je      persoEligeOrientacion

@@ -118,6 +118,8 @@ buscarZorroEncontrado:
 ;
 MostrarTablero:
     mov     [dirTablero],rdi
+
+    ; Preguntar por esta parte
     add     rdi,50 ; simbolo ocas
     mov     al,[rdi]
     mov     [simboloOcas],al
