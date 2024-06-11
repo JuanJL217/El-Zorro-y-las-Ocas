@@ -54,6 +54,7 @@ section .bss
     filaZorro               resq 1
     colZorro                resq 1
     movActual               resb 1
+    contador                resq 1
 
 section .text
 
@@ -515,3 +516,39 @@ finRealizarMovimiento:
 
     ret
 
+; recibe en rdi el vector movimientosPosibles
+; debe guardar en movimientosPosibles sólo los movimientos posibles que sean para comer ocas.
+; devuelve en el rax la cantidad de movimientos que comen ocas disponibles.
+; si no hay movimientos disponibles para comer ocas, devuelve 0.
+FiltrarMovimientosQueNoComenOcas:
+    mov     [dirVectMovimientos],rdi
+    mov     qword[contador],0
+
+buscarMovimientosComedores:
+    cmp     byte[rdi],-1
+    je      finBuscarMovimientosComedores
+
+    cmp     byte[rdi+3],1
+    jne     sigMovimiento
+
+    inc     qword[contador]
+    mov     eax,dword[rdi]
+    mov     rbx,[dirVectMovimientos]
+    mov     [rbx],eax
+    inc     qword[dirVectMovimientos],4
+
+sigMovimiento:
+    add     rdi,4
+    jmp     buscarMovimientosComedores
+
+finBuscarMovimientosComedores:
+    cmp     qword[contador],0
+    je      finFiltrarMovimientos
+    ; si había movimientos para comer ocas, actualizo el final del vector movimientoPosibles
+    mov     rbx,[dirVectMovimientos]
+    add     rbx,4
+    mov     byte[rbx],-1
+
+finFiltrarMovimientos:
+    mov     rax,qword[contador]
+    ret

@@ -47,12 +47,16 @@ extern MostrarTablero
 extern VerificarMovimientoOcas
 extern VerificarMovimientoZorro
 extern ContarOcas
+extern CalcularMovimientosZorro
+extern FiltrarMovimientosQueNoComenOcas
 
 extern copiarTablero
 
 section .data
     mensajeMainMenu             db "        ** MENÚ PRINCIPAL **",10,10,"Bienvenido al juego del Zorro y las Ocas!",10,"Seleccione una opción para jugar (ingresar número de opción)",10,"  0 - Cargar Partida",10,"  1 - Nueva Partida",10,0
     mensajeOpcionInvalida       db "Opción ingresada inválida. Debes ingresar un número de opción.",10,0
+    mensajeIngresoInvalido      db "El caracter ingresado no representa una acción posible a realizar. Por favor, guíese con los controles mostrados debajo del tablero.",10,0
+    mostrarControlesZorro       db "CONTROLES:",10," Ingresar uno de los caracteres indicados entre paréntesis. Los movimientos disponibles en este turno estan mostrados en el tablero con el número correspondiente.",10,"(1 - 9) Movimiento - (G) Guardar Partida - (S) Salir del Juego",10,0
     nombreArchivoGuardado       db "partidaGuardada.dat",0
     modoLecturaBinario          db "rb",0
     modoEscrituraBinario        db "wb",0
@@ -77,6 +81,8 @@ section .data
     orientacionSur              db "S"
     orientacionEste             db "E"
     orientacionOeste            db "O"
+    caracterGuardarPartida              db "G"
+    caracterSalirDelJuego               db "S"
     turnoDelZorro               db 1
     turnoDeLasOcas              db 0
     ; -1 espacios inaccesibles | 0 espacio | 1 oca | 2 zorro 
@@ -123,7 +129,8 @@ section .bss
     turnoActual             resb 1 ; es un número (0 Ocas ; 1 Zorro ; 2 Movimiento Extra del Zorro)
     ocasComidas             resb 1 ; es un número (0, 1, 2, ...)
     estadisticasZorro       times 8 resb 1 ; vector de 8 posiciones - una por cada dirección del zorro
-    movimientosPosibles     times 8 resb 4 ; vector de 8 elementos, cada uno con 4 valores - una por cada dirección posible
+    movimientosPosibles     times 8 resb 4 ; vector de 8 elementos, cada uno con 4 valores - una por cada dirección posible ; el final de este vector DEBE SER INDICADO con un -1
+    ; ¡IMPORTANTE! -> el vector movimientosPosibles es de tamaño variable! Siempre recorrerlo hasta encontrar el -1 (lo que sigue al -1 es basura)                                           
     finMovimientosPosibles  resb 1
 
     inputBuffer             resb 100
@@ -344,7 +351,11 @@ comenzarTurnoActual:
     cmp     byte[turnoActual],0
     je      turnoOcas
     ; sino ([turnoActual] == 1) es el turno del zorro
-    jmp     turnoZorro
+    cmp     byte[turnoActual],1
+    je      turnoZorro
+        ; sino ([turnoActual] == 2) es el turno extra del zorro
+    cmp     byte[turnoActual],2
+    je      turnoExtraZorro
 
 turnoOcas:
 
@@ -361,6 +372,8 @@ turnoZorro:
     add     rsp,8 
 
     Mprintf mostrarControlesZorro
+
+zorroIngresarJugada:
     Mgets   inputBuffer
 
     mov     rdi,movimientosPosibles
@@ -369,11 +382,66 @@ turnoZorro:
     call    ValidarEntradaTurnoZorro
     add     rsp,8
 
+    cmp     al,-1
+    je      zorroIngresoInvalido
+
+    cmp     al,[caracterGuardarPartida]
+    je      guardarPartida
+
+    cmp     al,[caracterSalirDelJuego]
+    je      salirDelJuego
+
+    mov     rdi,tablero
+    mov     sil,al
+    sub     rsp,8
+    call    RealizarMovimientoZorro
+    add     rsp,8
+    cmp     rax,0
+    je      establecerTurnoDeOcas
+
+establecerTurnoExtraZorro:
+    mov     al,2    
+    jmp     finTurnoZorro    
+
+establecerTurnoDeOcas:
+    mov     al,0
+
+finTurnoZorro:
+    mov     [turnoActual],al
+    jmp     verificarFinDeLaPartida
+
+zorroIngresoInvalido:
+    Mprintf mensajeIngresoInvalido
+    jmp     zorroIngresarJugada
+
+turnoExtraZorro:
+    MLimpiarPantalla
+    mov     rdi,tablero
+    sub     rsp,8
+    call    CalcularMovimientosZorro
+    add     rsp,8 
+
+    mov     rdi,movimientosPosibles
+    sub     rsp,8
+    call    FiltrarMovimientosQueNoComenOcas
+    add     rsp,8 
+
+    cmp     rax,0 ; no hay movimientos para comer más ocas
+    je      establecerTurnoDeOcas
+
+    mov     rdi,tablero
+    sub     rsp,8
+    call    MostrarTablero
+    add     rsp,8 
+
+    Mprintf mostrarControlesZorro
+    jmp     zorroIngresarJugada
+
+zorroIngresarJugada:
+    Mgets   inputBuffer
 
 
-    ret
-
-validarFin:
+verificarFinDeLaPartida:
     MLimpiarPantalla
     ; Si ninguna oca tiene movimientos disponibles -> empate
     mov     rdi,tablero
@@ -383,25 +451,14 @@ validarFin:
     cmp     rax,0
     je     mostrarEmpate
 
-    ; Verificar si fue el turno de las Ocas
-    cmp     byte [turnoActual],0
-    je      verificarVictoriaOcas
-
-    ; Verificar si fue el turno del Zorro
-    cmp     byte [turnoActual],1
-    je      verificarVictoriaZorro
-
 verificarVictoriaOcas:
     ; Si el Zorro no tiene movimientos disponibles, ganaron las Ocas
     mov     rdi,tablero
     sub     rsp,8
-    call    VerificarMovimientoZorro    ;Falta implementar: (guarda en rax 0 si no hay movimientos disponibles, 1 si hay movimientos disponibles)
+    call    VerificarMovimientoZorro
     add     rsp,8
     cmp     rax,0
     je      mostrarVictoriaOcas
-
-    ; No perdió nadie, ir al turno siguiente
-    jmp     comenzarTurnoActual
 
 verificarVictoriaZorro:
     ; Si quedan menos de 6 Ocas, ganó el Zorro
@@ -470,3 +527,6 @@ guardarPartidaError:
     Mprintf         mensajeErrorGuardarPartida
     MEnterParaContinuar
     jmp             comenzarTurnoActual
+
+salirDelJuego:
+    ret
