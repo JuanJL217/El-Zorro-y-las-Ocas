@@ -207,6 +207,8 @@ nuevaPartida:
     mov             [turnoActual],al
     mov             al,0
     mov             [ocasComidas],al
+    mov             al,-1
+    mov             [movimientosPosibles],al
 
 personalizacionMostrar:
     MLimpiarPantalla
