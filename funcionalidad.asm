@@ -217,8 +217,27 @@ VerificarMovimientoOcas:
 ; Falta implementar
     ret
 
+; recibe en rdi la dirección del tablero
+; guarda en rax 0 si no hay movimientos disponibles, 1 si hay movimientos disponibles
 VerificarMovimientoZorro:
-; Falta implementar
+    mov     [dirTablero],rdi     
+    
+    sub     rsp,8
+    call    CalcularMovimientosZorro
+    add     rsp,8
+
+    mov     rdi,[dirTablero]
+    add     rdi,62              
+    mov     [dirVectMovimientos],rdi
+
+    mov     al,byte[dirVectMovimientos]
+    cmp     al,-1
+    je      zorroNoTieneMovimientosDisponibles
+    mov     rax,1
+    ret
+
+zorroNoTieneMovimientosDisponibles:
+    mov     rax,0
     ret
 
 ; rdi = tablero
@@ -496,25 +515,3 @@ finRealizarMovimiento:
 
     ret
 
-; recibe en rdi la dirección del tablero
-; guarda en rax 0 si no hay movimientos disponibles, 1 si hay movimientos disponibles
-VerificarMovimientoZorro:
-    mov     [dirTablero],rdi     
-    
-    sub     rsp,8
-    call    CalcularMovimientosZorro
-    add     rsp,8
-
-    mov     rdi,[dirTablero]
-    add     rdi,62              
-    mov     [dirVectMovimientos],rdi
-
-    mov     al,byte[dirVectMovimientos]
-    cmp     al,-1
-    je      zorroNoTieneMovimientosDisponibles
-    mov     rax,1
-    ret
-
-zorroNoTieneMovimientosDisponibles:
-    mov     rax,0
-    ret

@@ -113,17 +113,18 @@ section .data
     tableroOeste6               db -1,-1, 1, 1, 1,-1,-1
 
 section .bss
-    registroDatosPartida    times 0 resb 94 ; Es una etiqueta (apunta a exactamente lo mismo que la etiqueta "tablero")
+    registroDatosPartida    times 0 resb 95 ; Es una etiqueta (apunta a exactamente lo mismo que la etiqueta "tablero")
     ; Variables de partida - en orden específico para poder acceder a todas desde diferentes rutinas
     ; ¡IMPORTANTE! -> TODOS ESTOS DATOS ESTÁN EN UN BYTE CADA UNO, PARA OPERAR CON ELLOS HAY QUE USAR REGISTROS DE 8 BITS (al,bl,cl,dl,ah,bh,ch,dh,...)
     tablero                 times 7 resb 7
     orientacion             resb 1 ; es un char ascii
     simboloOcas             resb 1 ; es un char ascii
     simboloZorro            resb 1 ; es un char ascii
-    turnoActual             resb 1 ; es un número (0 Ocas ; 1 Zorro)
+    turnoActual             resb 1 ; es un número (0 Ocas ; 1 Zorro ; 2 Movimiento Extra del Zorro)
     ocasComidas             resb 1 ; es un número (0, 1, 2, ...)
     estadisticasZorro       times 8 resb 1 ; vector de 8 posiciones - una por cada dirección del zorro
     movimientosPosibles     times 8 resb 4 ; vector de 8 elementos, cada uno con 4 valores - una por cada dirección posible
+    finMovimientosPosibles  resb 1
 
     inputBuffer             resb 100
     idArchivoGuardado       resq 1
@@ -209,6 +210,7 @@ nuevaPartida:
     mov             [ocasComidas],al
     mov             al,-1
     mov             [movimientosPosibles],al
+    mov             [finMovimientosPosibles],al
 
 personalizacionMostrar:
     MLimpiarPantalla
@@ -350,8 +352,25 @@ turnoZorro:
     MLimpiarPantalla
     mov     rdi,tablero
     sub     rsp,8
+    call    CalcularMovimientosZorro
+    add     rsp,8 
+
+    mov     rdi,tablero
+    sub     rsp,8
     call    MostrarTablero
     add     rsp,8 
+
+    Mprintf mostrarControlesZorro
+    Mgets   inputBuffer
+
+    mov     rdi,movimientosPosibles
+    mov     rsi,inputBuffer
+    sub     rsp,8
+    call    ValidarEntradaTurnoZorro
+    add     rsp,8
+
+
+
     ret
 
 validarFin:
@@ -382,7 +401,7 @@ verificarVictoriaOcas:
     je      mostrarVictoriaOcas
 
     ; No perdió nadie, ir al turno siguiente
-    jmp     cambiarTurnoActual
+    jmp     comenzarTurnoActual
 
 verificarVictoriaZorro:
     ; Si quedan menos de 6 Ocas, ganó el Zorro
@@ -393,7 +412,7 @@ verificarVictoriaZorro:
     jl      mostrarVictoriaZorro
 
     ; No perdió nadie, ir al turno siguiente
-    jmp     cambiarTurnoActual
+    jmp     comenzarTurnoActual
 
 mostrarEmpate:
     ; Mostrar empate y mostrar estadísticas de fin
@@ -413,23 +432,6 @@ mostrarVictoriaOcas:
 mostrarEstadisticasFin:
 ;Falta implementar
 ; Mostrar estadísticas de fin y finalizar el juego
-
-cambiarTurnoActual:
-    ; Si [turnoActual] == 0, cambio a 1. Sino, cambio a 0
-    cmp     byte[turnoActual],0
-    je      cambiarTurnoAZorro
-    jmp    cambiarTurnoAOcas
-
-cambiarTurnoAZorro:
-    mov     al,1
-    mov     [turnoActual],al
-    jmp     comenzarTurnoActual
-
-cambiarTurnoAOcas:
-    mov     al,0
-    mov     [turnoActual],al
-    jmp     comenzarTurnoActual
-
 
 guardarPartida:
     ; Abro el archivo de guardado
