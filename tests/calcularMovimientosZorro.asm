@@ -93,6 +93,7 @@ section .bss
     dirVectMovimientos      resq 1
     filaZorro               resq 1
     colZorro                resq 1
+    numActual               resq 1
     acumuladorBL            resb 10
     movIngresado            resb 1
 
@@ -144,14 +145,14 @@ mostrarResultado:
     jmp     mostrarResultado
 
 pedirMovimiento:
-    Mgets   inputBuffer
-    Msscanf inputBuffer,formatoIntByte,movIngresado
-    ; aca hay que validar que sea un movimiento valido
-    
     mov     rdi,tablero
     sub     rsp,8
     call    MostrarTablero
     add     rsp,8
+
+    Mgets   inputBuffer
+    Msscanf inputBuffer,formatoIntByte,movIngresado
+    ; aca hay que validar que sea un movimiento valido
     
     mov     rdi,tablero
     mov     sil,[movIngresado]
@@ -447,10 +448,6 @@ finRealizarMovimiento:
     mov     al,r11b
     ret
 
-
-
-
-
 ; busca la posición del zorro en el tablero que incia en la direccion rdi
 ; devuelve la fila en rax y la columna en rbx
 ; devuelve valores para usar directamente en código, es decir números entre 0 y 6
@@ -507,6 +504,8 @@ MostrarTablero:
     add     rdi,1 ; simbolo zorro
     mov     al,[rdi]
     mov     [simboloZorro],al
+    mov     rdi,11 ; me muevo hasta la posicion de movimientos posibles
+    mov     [dirVectMovimientos],rdi
 
     Mprintf ANSIColorMarco
     Mprintf mostrarLineaColumnas
@@ -514,6 +513,8 @@ MostrarTablero:
                                             ; marco las líneas que se pueden copiar y pegar para hacer
     mov     qword[iteradorFila],0           ; la estructura de un loop que itera sobre todo el tablero
     mov     qword[iteradorCol],0            ;
+    mov     qword[iterador],0               ;Este el el iterador para el vector de mov posibles
+   
     Mprintf ANSIColorMarco
     mov     r8,[iteradorFila]
     inc     r8
@@ -521,24 +522,26 @@ MostrarTablero:
     Mprintf ANSIResetColor
 
 mostrarTableroLoop:
-    cmp     qword[iteradorCol],7            ;
-    jge     mostrarTableroProximaFila       ;
-    mov     rax,qword[longitudElemento]
-    imul    rax,qword[iteradorCol]
+    cmp    qword[iteradorCol],7
+    je     mostrarTableroProximaFila
+
+    mov     rdx,qword[longitudElemento]
+    imul    rdx,qword[iteradorCol]
 
     mov     rbx,qword[longitudFila]
     imul    rbx,qword[iteradorFila]
 
-    add     rax,rbx
-    add     rax,[dirTablero]
+    add     rdx,rbx
+    add     rdx,[dirTablero]
                                             ; aqui ingresar lógica para cada elemento del tablero
                                             ; el elemento está cargado en el registro bl
-    mov     bl,byte[rax]
+    mov     bl,byte[rdx]
     sub     rsp,8
     call    identificarSimbolo
     add     rsp,8
 
-    Mprintf mostrarElemento,rax
+mostrarElementoEnTablero:
+    Mprintf mostrarElemento,rdx
 
     inc     qword[iteradorCol]              ;
     jmp     mostrarTableroLoop              ;
@@ -574,7 +577,7 @@ mostrarTableroFin:
 ;   en bl está el código del elemento en tablero
 ;   devuelve en al el caracter que representa ese elemento
 identificarSimbolo:
-    mov     rax,0
+    mov     rdx,0
     cmp     bl,-1
     je      esInaccesible
     cmp     bl,0
@@ -584,14 +587,43 @@ identificarSimbolo:
     cmp     bl,2
     je      esZorro
 esInaccesible:
-    mov     al,35
+    mov     dl,35
     ret
 esEspacio:
-    mov     al,32
+    mov     dl,32
     ret
 esOca:
-    mov     al,79
+    mov     dl,79
     ret
 esZorro:
-    mov     al,88
+    mov     dl,88
+    ret
+
+buscarFilColEnMovPosibles:
+    cmp     qword[iterador],7
+    je      finalizarBusqueda
+
+    mov     rax,[iterador]
+    imul    rax,4 
+    add     rax,[dirVectMovimientos]
+    mov     bl,byte[rax]
+    mov     [numActual],bl
+
+    mov     bl,byte[iteradorFila]
+    cmp     bl,byte[rax+1]
+    jne     incrementarIterador
+
+    mov     bl,[iteradorCol]
+    cmp     bl,byte[rax+2]
+    jne     incrementarIterador
+
+    mov     rdx,[numActual]
+    mov     rax,0
+    jmp     finalizarBusqueda
+
+incrementarIterador:
+    inc     qword[iterador]
+    jmp     buscarFilColEnMovPosibles
+finalizarBusqueda:
+    mov     qword[iterador],0
     ret
