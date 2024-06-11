@@ -222,6 +222,7 @@ VerificarMovimientoZorro:
     ret
 
 ; rdi = tablero
+; guarda en movimientosPosibles los movimientos que puede realizar el zorro desde su posición
 CalcularMovimientosZorro:
     mov     [dirTablero],rdi
     sub     rsp,8
@@ -379,7 +380,8 @@ finCalcMovimientos:
     ret
 
 ; rdi = tablero
-; sil = nroMov
+; sil = nroMov (validado previamente)
+; actualiza la posición del zorro según el numero de movimiento ingresado (debe ser valido)
 ; si NO comio una oca, devuelve 0 en rax
 ; si comio una oca, actualiza ocasComidas y devuelve en rax 1 
 RealizarMovimientoZorro:
@@ -512,7 +514,7 @@ VerificarMovimientoZorro:
     je      zorroNoTieneMovimientosDisponibles
     mov     rax,1
     ret
-    
+
 zorroNoTieneMovimientosDisponibles:
     mov     rax,0
     ret
