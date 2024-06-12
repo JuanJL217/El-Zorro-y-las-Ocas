@@ -162,8 +162,10 @@ pedirMovimiento:
 
     mov     rdi,tablero
     sub     rsp,8
-    call    MostrarTablero
+    call    CalcularMovimientosZorro
     add     rsp,8
+
+    jmp     pedirMovimiento
 
 finPrograma:
 
@@ -504,7 +506,7 @@ MostrarTablero:
     add     rdi,1 ; simbolo zorro
     mov     al,[rdi]
     mov     [simboloZorro],al
-    mov     rdi,11 ; me muevo hasta la posicion de movimientos posibles
+    add     rdi,11 ; me muevo hasta la posicion de movimientos posibles
     mov     [dirVectMovimientos],rdi
 
     Mprintf ANSIColorMarco
@@ -524,6 +526,13 @@ MostrarTablero:
 mostrarTableroLoop:
     cmp    qword[iteradorCol],7
     je     mostrarTableroProximaFila
+
+    sub     rsp,8
+    call    buscarFilColEnMovPosibles
+    add     rsp,8
+
+    cmp     rax,0
+    je      mostrarElementoEnTablero
 
     mov     rdx,qword[longitudElemento]
     imul    rdx,qword[iteradorCol]
@@ -599,24 +608,36 @@ esZorro:
     mov     dl,88
     ret
 
+
+;Busca en el vector de movimientos posibles si está la posicion actual de la matriz
+;numero representado como ASCII del movimiento correspondiente en el registro rdx y un 0 en rax
+;rax = -1 si no encontro la posicion
 buscarFilColEnMovPosibles:
-    cmp     qword[iterador],7
+    mov     rax,-1 ;por default no se encuentra nada
+    mov     rbx,0  ;limpio los registros por las dudas
+    mov     rcx,0 
+
+    cmp     qword[iterador],8          ;como mucho se va a iterar un total de 9 veces (caso de maximo movimientos posibles)
     je      finalizarBusqueda
 
-    mov     rax,[iterador]
-    imul    rax,4 
-    add     rax,[dirVectMovimientos]
-    mov     bl,byte[rax]
+    mov     rcx,[iterador]
+    imul    rcx,4 
+    add     rcx,[dirVectMovimientos]
+    mov     bl,byte[rcx]
+    cmp     bl,-1                       ;se llego al final del vector de movimientos
+    je      finalizarBusqueda
+
     mov     [numActual],bl
 
-    mov     bl,byte[iteradorFila]
-    cmp     bl,byte[rax+1]
+    mov     rbx,[iteradorFila]
+    cmp     bl,byte[rcx+1]
     jne     incrementarIterador
 
-    mov     bl,[iteradorCol]
-    cmp     bl,byte[rax+2]
+    mov     rbx,[iteradorCol]
+    cmp     bl,byte[rcx+2]
     jne     incrementarIterador
 
+    add     qword[numActual],48         ; para representar el numero como caracter
     mov     rdx,[numActual]
     mov     rax,0
     jmp     finalizarBusqueda

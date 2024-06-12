@@ -1,0 +1,808 @@
+     1                                  %macro Mprintf 1
+     2                                      mov     rdi,%1
+     3                                      sub     rsp,8
+     4                                      call    printf
+     5                                      add     rsp,8
+     6                                  %endmacro
+     7                                  %macro Mprintf 2
+     8                                      mov     rdi,%1
+     9                                      mov     rsi,%2
+    10                                      sub     rsp,8
+    11                                      call    printf
+    12                                      add     rsp,8
+    13                                  %endmacro
+    14                                  %macro Mgets 1
+    15                                      mov     rdi,%1
+    16                                      sub     rsp,8
+    17                                      call    gets
+    18                                      add     rsp,8
+    19                                  %endmacro
+    20                                  %macro Msscanf 3
+    21                                      mov     rdi,%1    ; (char*) inputStr 
+    22                                      mov     rsi,%2    ; (char*) format
+    23                                      mov     rdx,%3    ; (num*) numeroGuardar <- longitud debe coincidir con format
+    24                                      sub     rsp,8
+    25                                      call    sscanf
+    26                                      add     rsp,8
+    27                                  %endmacro
+    28                                  
+    29                                  global main
+    30                                  extern printf
+    31                                  extern gets
+    32                                  extern sscanf
+    33                                  
+    34                                  section .data
+    35                                      ; -1 espacios inaccesibles | 0 espacio | 1 oca | 2 zorro 
+    36 00000000 FFFF010101FFFF              tableroNorte                db -1,-1, 1, 1, 1,-1,-1
+    37 00000007 FFFF010101FFFF              tableroNorte1               db -1,-1, 1, 1, 1,-1,-1
+    38 0000000E 01010101010101              tableroNorte2               db  1, 1, 1, 1, 1, 1, 1
+    39 00000015 01000000000001              tableroNorte3               db  1, 0, 0, 0, 0, 0, 1
+    40 0000001C 01000102000001              tableroNorte4               db  1, 0, 1, 2, 0, 0, 1
+    41 00000023 FFFF000000FFFF              tableroNorte5               db -1,-1, 0, 0, 0,-1,-1
+    42 0000002A FFFF000000FFFF              tableroNorte6               db -1,-1, 0, 0, 0,-1,-1
+    43                                  
+    44                                  
+    45 00000031 02                          repZorro                    db 2
+    46 00000032 00                          repEspacio                  db 0
+    47                                  
+    48 00000033 0700000000000000            longitudFila                dq 7
+    49 0000003B 0100000000000000            longitudElemento            dq 1
+    50 00000043 0A00                        newLine                     db 10,0
+    51 00000045 256868692000                mostrarInt                  db "%hhi ",0
+    52 0000004B 20                          simboloEspacio              db ' '
+    53 0000004C 58                          simboloZorro                db 'X'
+    54 0000004D 4F                          simboloOcas                 db 'O'
+    55 0000004E 23                          simboloInaccesible          db '#'
+    56 0000004F 0A00                        nuevaLinea              db 10,0
+    57 00000051 5B205D203120203220-         mostrarLineaColumnas    db "[ ] 1  2  3  4  5  6  7 [ ]",10,0
+    57 0000005A 203320203420203520-
+    57 00000063 2036202037205B205D-
+    57 0000006C 0A00               
+    58 0000006E 2025632000                  mostrarElemento         db " %c ",0
+    59 00000073 20256C692000                mostrarFila             db " %li ",0
+    60 00000079 6E726F3A2025686869-         mostrarMovimientoPosible db "nro: %hhi , fil: %hhi , col: %hhi , come oca?: %hhi",10,0
+    60 00000082 202C2066696C3A2025-
+    60 0000008B 686869202C20636F6C-
+    60 00000094 3A2025686869202C20-
+    60 0000009D 636F6D65206F63613F-
+    60 000000A6 3A20256868690A00   
+    61 000000AE 424C3A202568686920-         mostrarBL               db "BL: %hhi - -",0
+    61 000000B7 2D202D00           
+    62 000000BB 66696C615A6F72726F-         mostrarPosZorro         db "filaZorro: %li colZorro: %li",10,0
+    62 000000C4 3A20256C6920636F6C-
+    62 000000CD 5A6F72726F3A20256C-
+    62 000000D6 690A00             
+    63 000000D9 2568686900                  formatoIntByte          db "%hhi",0
+    64                                      ; ANSI
+    65 000000DE 1B5B316D00                  ANSIBoldOn              db 27,"[1m",0
+    66 000000E3 1B5B32326D00                ANSIBoldOff             db 27,"[22m",0
+    67 000000E9 1B5B306D00                  ANSIResetColor          db 27,"[0m",0
+    68 000000EE 1B5B33383B353B3838-         ANSIColorMarco          db 27,"[38;5;88m",0
+    68 000000F7 6D00               
+    69                                  
+    70                                  
+    71                                  section .bss
+    72 00000000 <res 31h>                   tablero                 times 7 resb 7
+    73 00000031 ??                          orientacion             resb 1 ; es un char ascii
+    74 00000032 ??                          simboloOcasC            resb 1 ; es un char ascii
+    75 00000033 ??                          simboloZorroC           resb 1 ; es un char ascii
+    76 00000034 ??                          turnoActual             resb 1 ; es un número (0 Ocas ; 1 Zorro)
+    77 00000035 ??                          ocasComidas             resb 1 ; es un número (0, 1, 2, ...)
+    78 00000036 ????????????????            estadisticasZorro       times 8 resb 1 ; vector de 8 posiciones - una por cada dirección del zorro
+    79 0000003E <res 20h>                   movimientosPosibles     times 8 resb 4 ; vector de 8 elementos, cada uno con 4 valores - una por cada dirección posible
+    80                                      ; (nroMov, filMov, colMov, comeOca?)
+    81                                      ; (nroMov, filMov, colMov, comeOca?)
+    82                                      ; (nroMov, filMov, colMov, comeOca?)
+    83                                      ; (nroMov, filMov, colMov, comeOca?)
+    84                                      ; (nroMov, filMov, colMov, comeOca?)
+    85                                  
+    86 0000005E <res 64h>                   inputBuffer             resb 100
+    87 000000C2 ??                          movActual               resb 1
+    88 000000C3 ????????????????            iterador                resq 1
+    89 000000CB ????????????????            fila                    resq 1
+    90 000000D3 ????????????????            iteradorFila            resq 1
+    91 000000DB ????????????????            iteradorCol             resq 1
+    92 000000E3 ????????????????            dirTablero              resq 1
+    93 000000EB ????????????????            dirVectMovimientos      resq 1
+    94 000000F3 ????????????????            filaZorro               resq 1
+    95 000000FB ????????????????            colZorro                resq 1
+    96 00000103 ????????????????            numActual               resq 1
+    97 0000010B <res Ah>                    acumuladorBL            resb 10
+    98 00000115 ??                          movIngresado            resb 1
+    99                                  
+   100                                  section .text
+   101                                  
+   102                                  main:
+   103 00000000 48BE-                       mov     rsi,tableroNorte
+   103 00000002 [0000000000000000] 
+   104 0000000A 48BF-                       mov     rdi,tablero
+   104 0000000C [0000000000000000] 
+   105                                  CopiarTablero:
+   106 00000014 B900000000                  mov     rcx,0
+   107                                  copiarTableroBucle:
+   108 00000019 4883F931                    cmp     rcx,49
+   109 0000001D 7D0B                        jge     copiarTableroFin
+   110 0000001F 8A340E                      mov     dh,[rsi+rcx]
+   111 00000022 88340F                      mov     [rdi+rcx],dh
+   112 00000025 48FFC1                      inc     rcx
+   113 00000028 EBEF                        jmp     copiarTableroBucle
+   114                                  
+   115                                  copiarTableroFin:
+   116                                      
+   117 0000002A 48BF-                       mov     rdi,tablero
+   117 0000002C [0000000000000000] 
+   118 00000034 4883EC08                    sub     rsp,8
+   119 00000038 E809010000                  call    CalcularMovimientosZorro
+   120 0000003D 4883C408                    add     rsp,8
+   121                                  
+   122 00000041 48BF-                       mov     rdi,newLine
+   122 00000043 [4300000000000000] 
+   123 0000004B 4883EC08                    sub     rsp,8
+   124 0000004F E8(00000000)                call    printf
+   125 00000054 4883C408                    add     rsp,8
+   126 00000058 48C70425[C3000000]-         mov     qword[iterador],0
+   126 00000060 00000000           
+   127                                  mostrarResultado:
+   128 00000064 48833C25[C3000000]-         cmp     qword[iterador],8
+   128 0000006C 08                 
+   129 0000006D 7D42                        jge     pedirMovimiento
+   130                                      
+   131 0000006F 488B0425[C3000000]          mov     rax,[iterador]
+   132 00000077 486BC004                    imul    rax,4
+   133 0000007B 4805[3E000000]              add     rax,movimientosPosibles
+   134                                  
+   135 00000081 48BF-                       mov     rdi,mostrarMovimientoPosible
+   135 00000083 [7900000000000000] 
+   136 0000008B 488B30                      mov     rsi,[rax]
+   137 0000008E 488B5001                    mov     rdx,[rax+1]
+   138 00000092 488B4802                    mov     rcx,[rax+2]
+   139 00000096 4C8B4003                    mov     r8,[rax+3]
+   140 0000009A 4883EC08                    sub     rsp,8
+   141 0000009E E8(00000000)                call    printf
+   142 000000A3 4883C408                    add     rsp,8
+   143                                  
+   144 000000A7 48FF0425[C3000000]          inc     qword[iterador]
+   145 000000AF EBB3                        jmp     mostrarResultado
+   146                                  
+   147                                  pedirMovimiento:
+   148 000000B1 48BF-                       mov     rdi,tablero
+   148 000000B3 [0000000000000000] 
+   149 000000BB 4883EC08                    sub     rsp,8
+   150 000000BF E844050000                  call    MostrarTablero
+   151 000000C4 4883C408                    add     rsp,8
+   152                                  
+   153                                      Mgets   inputBuffer
+    15 000000C8 48BF-               <1>  mov rdi,%1
+    15 000000CA [5E00000000000000]  <1>
+    16 000000D2 4883EC08            <1>  sub rsp,8
+    17 000000D6 E8(00000000)        <1>  call gets
+    18 000000DB 4883C408            <1>  add rsp,8
+   154                                      Msscanf inputBuffer,formatoIntByte,movIngresado
+    21 000000DF 48BF-               <1>  mov rdi,%1
+    21 000000E1 [5E00000000000000]  <1>
+    22 000000E9 48BE-               <1>  mov rsi,%2
+    22 000000EB [D900000000000000]  <1>
+    23 000000F3 48BA-               <1>  mov rdx,%3
+    23 000000F5 [1501000000000000]  <1>
+    24 000000FD 4883EC08            <1>  sub rsp,8
+    25 00000101 E8(00000000)        <1>  call sscanf
+    26 00000106 4883C408            <1>  add rsp,8
+   155                                      ; aca hay que validar que sea un movimiento valido
+   156                                      
+   157 0000010A 48BF-                       mov     rdi,tablero
+   157 0000010C [0000000000000000] 
+   158 00000114 408A3425[15010000]          mov     sil,[movIngresado]
+   159 0000011C 4883EC08                    sub     rsp,8
+   160 00000120 E8AB020000                  call    RealizarMovimientoZorro
+   161 00000125 4883C408                    add     rsp,8
+   162                                  
+   163 00000129 48BF-                       mov     rdi,tablero
+   163 0000012B [0000000000000000] 
+   164 00000133 4883EC08                    sub     rsp,8
+   165 00000137 E80A000000                  call    CalcularMovimientosZorro
+   166 0000013C 4883C408                    add     rsp,8
+   167                                  
+   168 00000140 E96CFFFFFF                  jmp     pedirMovimiento
+   169                                  
+   170                                  finPrograma:
+   171                                  
+   172 00000145 C3                          ret
+   173                                  
+   174                                  ; rdi = tablero
+   175                                  CalcularMovimientosZorro:
+   176 00000146 48893C25[E3000000]          mov     [dirTablero],rdi
+   177 0000014E 4883EC08                    sub     rsp,8
+   178 00000152 E817040000                  call    buscarZorro
+   179 00000157 4883C408                    add     rsp,8
+   180 0000015B 48890425[F3000000]          mov     [filaZorro],rax
+   181 00000163 48891C25[FB000000]          mov     [colZorro],rbx
+   182                                  
+   183 0000016B 4883C73E                    add     rdi,62              
+   184                                      ; rdi = movimientosPosibles
+   185 0000016F 48893C25[EB000000]          mov     [dirVectMovimientos],rdi
+   186                                  
+   187 00000177 48BF-                       mov     rdi,mostrarPosZorro
+   187 00000179 [BB00000000000000] 
+   188 00000181 488B3425[F3000000]          mov     rsi,[filaZorro]
+   189 00000189 488B1425[FB000000]          mov     rdx,[colZorro]
+   190 00000191 4883EC08                    sub     rsp,8
+   191 00000195 E8(00000000)                call    printf
+   192 0000019A 4883C408                    add     rsp,8
+   193                                  
+   194 0000019E 48C70425[D3000000]-         mov     qword[iteradorFila],-1
+   194 000001A6 FFFFFFFF           
+   195 000001AA 48C70425[DB000000]-         mov     qword[iteradorCol],-1
+   195 000001B2 FFFFFFFF           
+   196 000001B6 C60425[C2000000]01          mov     byte[movActual],1
+   197                                  
+   198                                  movimientoFilaBucle:
+   199 000001BE 48833C25[DB000000]-         cmp     qword[iteradorCol],1
+   199 000001C6 01                 
+   200 000001C7 0F8FD3010000                jg      movimientoProxFila
+   201                                  
+   202                                      ; rax = (c + j)
+   203 000001CD 488B0425[FB000000]          mov     rax,qword[colZorro]
+   204 000001D5 48030425[DB000000]          add     rax,qword[iteradorCol]
+   205                                  
+   206                                      ; si salgo de la matriz, sig movimiento
+   207 000001DD 4883F800                    cmp     rax,0
+   208 000001E1 0F8CA5010000                jl      calcProxMov
+   209 000001E7 4883F806                    cmp     rax,6
+   210 000001EB 0F8F9B010000                jg      calcProxMov
+   211                                  
+   212 000001F1 480FAF0425-                 imul    rax,qword[longitudElemento]
+   212 000001F6 [3B000000]         
+   213                                      
+   214                                      ; rbx = (f + i)
+   215 000001FA 488B1C25[F3000000]          mov     rbx,qword[filaZorro]
+   216 00000202 48031C25[D3000000]          add     rbx,qword[iteradorFila]
+   217                                      
+   218                                      ; si salgo de la matriz, sig fila
+   219 0000020A 4883FB00                    cmp     rbx,0
+   220 0000020E 0F8C8C010000                jl      movimientoProxFila
+   221 00000214 4883FB06                    cmp     rbx,6
+   222 00000218 0F8F82010000                jg      movimientoProxFila
+   223                                  
+   224 0000021E 480FAF1C25-                 imul    rbx,qword[longitudFila]
+   224 00000223 [33000000]         
+   225                                  
+   226 00000227 4801D8                      add     rax,rbx
+   227 0000022A 48030425[E3000000]          add     rax,[dirTablero]
+   228 00000232 8A18                        mov     bl,byte[rax]
+   229                                  
+   230 00000234 48BF-                       mov     rdi,mostrarInt
+   230 00000236 [4500000000000000] 
+   231 0000023E BE00000000                  mov     rsi,0
+   232 00000243 4088DE                      mov     sil,bl
+   233 00000246 4883EC08                    sub     rsp,8
+   234 0000024A E8(00000000)                call    printf
+   235 0000024F 4883C408                    add     rsp,8
+   236                                  
+   237 00000253 80FB00                      cmp     bl,0
+   238 00000256 7554                        jne     verSiComeOca
+   239                                      
+   240                                      ; hay un movimiento que no come oca
+   241 00000258 488B1C25[EB000000]          mov     rbx,[dirVectMovimientos]
+   242 00000260 8A0425[C2000000]            mov     al,byte[movActual]
+   243 00000267 8803                        mov     byte[rbx],al
+   244                                      ; rax = (f + i)
+   245 00000269 488B0425[F3000000]          mov     rax,qword[filaZorro]
+   246 00000271 48030425[D3000000]          add     rax,qword[iteradorFila]
+   247 00000279 884301                      mov     byte[rbx+1],al
+   248                                      ; rax = (c + j)
+   249 0000027C 488B0425[FB000000]          mov     rax,qword[colZorro]
+   250 00000284 48030425[DB000000]          add     rax,qword[iteradorCol]  
+   251 0000028C 884302                      mov     byte[rbx+2],al
+   252                                  
+   253 0000028F C6430300                    mov     byte[rbx+3],0
+   254                                  
+   255 00000293 488B0425[EB000000]          mov     rax,[dirVectMovimientos]
+   256 0000029B 4883C004                    add     rax,4
+   257 0000029F 48890425[EB000000]          mov     [dirVectMovimientos],rax
+   258 000002A7 E9E0000000                  jmp     calcProxMov
+   259                                  
+   260                                  verSiComeOca:
+   261 000002AC 80FB01                      cmp     bl,1
+   262 000002AF 0F85D7000000                jne     calcProxMov
+   263                                  
+   264                                      ; rax = j*2 + c
+   265 000002B5 488B0425[DB000000]          mov     rax,qword[iteradorCol]
+   266 000002BD 486BC002                    imul    rax,2
+   267 000002C1 48030425[FB000000]          add     rax,qword[colZorro]
+   268                                  
+   269                                      ; si salgo de la matriz, sig movimiento
+   270 000002C9 4883F800                    cmp     rax,0
+   271 000002CD 0F8CB9000000                jl      calcProxMov
+   272 000002D3 4883F806                    cmp     rax,6
+   273 000002D7 0F8FAF000000                jg      calcProxMov
+   274                                  
+   275 000002DD 480FAF0425-                 imul    rax,qword[longitudElemento]
+   275 000002E2 [3B000000]         
+   276                                  
+   277                                      ; rbx = i*2 + f
+   278 000002E6 488B1C25[D3000000]          mov     rbx,qword[iteradorFila]
+   279 000002EE 486BDB02                    imul    rbx,2
+   280 000002F2 48031C25[F3000000]          add     rbx,qword[filaZorro]
+   281                                  
+   282                                      ; si salgo de la matriz, sig fila
+   283 000002FA 4883FB00                    cmp     rbx,0
+   284 000002FE 0F8C9C000000                jl      movimientoProxFila
+   285 00000304 4883FB06                    cmp     rbx,6
+   286 00000308 0F8F92000000                jg      movimientoProxFila
+   287                                  
+   288                                  
+   289 0000030E 480FAF1C25-                 imul    rbx,qword[longitudFila]
+   289 00000313 [33000000]         
+   290                                          
+   291 00000317 4801D8                      add     rax,rbx
+   292 0000031A 48030425[E3000000]          add     rax,[dirTablero]
+   293 00000322 8A18                        mov     bl,byte[rax]
+   294 00000324 80FB00                      cmp     bl,0
+   295 00000327 7563                        jne     calcProxMov
+   296                                      ; hay un movimiento que si come oca
+   297 00000329 488B1C25[EB000000]          mov     rbx,[dirVectMovimientos]
+   298 00000331 8A0425[C2000000]            mov     al,byte[movActual]
+   299 00000338 8803                        mov     byte[rbx],al
+   300                                      ; rbx = (f + 2i)
+   301 0000033A B800000000                  mov     rax,0
+   302 0000033F 488B0425[D3000000]          mov     rax,qword[iteradorFila]
+   303 00000347 486BC002                    imul    rax,2
+   304 0000034B 48030425[F3000000]          add     rax,qword[filaZorro]
+   305 00000353 884301                      mov     byte[rbx+1],al
+   306                                      ; rax = (c + 2j)
+   307 00000356 B800000000                  mov     rax,0
+   308 0000035B 488B0425[DB000000]          mov     rax,qword[iteradorCol] 
+   309 00000363 486BC002                    imul    rax,2
+   310 00000367 48030425[FB000000]          add     rax,qword[colZorro]
+   311 0000036F 884302                      mov     byte[rbx+2],al
+   312                                  
+   313 00000372 C6430301                    mov     byte[rbx+3],1
+   314                                  
+   315 00000376 488B0425[EB000000]          mov     rax,[dirVectMovimientos]
+   316 0000037E 4883C004                    add     rax,4
+   317 00000382 48890425[EB000000]          mov     [dirVectMovimientos],rax
+   318                                  
+   319 0000038A EB00                        jmp     calcProxMov
+   320                                  
+   321                                  calcProxMov:
+   322 0000038C 48FF0425[DB000000]          inc     qword[iteradorCol]
+   323 00000394 FE0425[C2000000]            inc     byte[movActual]
+   324 0000039B E91EFEFFFF                  jmp     movimientoFilaBucle
+   325                                  movimientoProxFila:
+   326 000003A0 48FF0425[D3000000]          inc     qword[iteradorFila]
+   327 000003A8 48833C25[D3000000]-         cmp     qword[iteradorFila],1
+   327 000003B0 01                 
+   328 000003B1 7F11                        jg      finCalcMovimientos
+   329                                      
+   330 000003B3 48C70425[DB000000]-         mov     qword[iteradorCol],-1
+   330 000003BB FFFFFFFF           
+   331 000003BF E9FAFDFFFF                  jmp     movimientoFilaBucle
+   332                                  
+   333                                  finCalcMovimientos:
+   334 000003C4 488B1C25[EB000000]          mov     rbx,[dirVectMovimientos]
+   335 000003CC C603FF                      mov     byte[rbx],-1
+   336 000003CF C3                          ret
+   337                                  
+   338                                  ; rdi = tablero
+   339                                  ; sil = nroMov
+   340                                  ; si NO comio una oca, devuelve 0 en rax
+   341                                  ; si comio una oca, actualiza ocasComidas y devuelve en rax 1 
+   342                                  RealizarMovimientoZorro:
+   343 000003D0 48893C25[E3000000]          mov     [dirTablero],rdi
+   344 000003D8 4883EC08                    sub     rsp,8
+   345 000003DC E88D010000                  call    buscarZorro
+   346 000003E1 4883C408                    add     rsp,8
+   347 000003E5 48890425[F3000000]          mov     [filaZorro],rax
+   348 000003ED 48891C25[FB000000]          mov     [colZorro],rbx
+   349                                  
+   350 000003F5 4883C73E                    add     rdi,62              
+   351 000003F9 48893C25[EB000000]          mov     [dirVectMovimientos],rdi
+   352                                  
+   353 00000401 48C70425[C3000000]-         mov     qword[iterador],0
+   353 00000409 00000000           
+   354                                  
+   355                                  buscarMovEnMovPosibles:
+   356 0000040D 48833C25[C3000000]-         cmp     qword[iterador],7
+   356 00000415 07                 
+   357 00000416 742A                        je      movNoPosible    ; (No debería pasar nunca)
+   358                                  
+   359 00000418 488B0425[C3000000]          mov     rax,[iterador]
+   360 00000420 486BC004                    imul    rax,4           ; long. de elemento de vectorMovimientos
+   361 00000424 48030425[EB000000]          add     rax,[dirVectMovimientos]
+   362 0000042C 8A18                        mov     bl,byte[rax]    ; bl = nro de mov posible
+   363 0000042E 80FBFF                      cmp     bl,-1
+   364 00000431 740F                        je      movNoPosible    ; (No debería pasar nunca)
+   365 00000433 4038F3                      cmp     bl,sil
+   366 00000436 740B                        je      movEncontrado
+   367                                  
+   368 00000438 48FF0425[C3000000]          inc     qword[iterador]
+   369 00000440 EBCB                        jmp     buscarMovEnMovPosibles
+   370                                  
+   371                                  movNoPosible:
+   372 00000442 C3                          ret
+   373                                  
+   374                                  movEncontrado:
+   375                                      ; guardo la posición del movimiento actual
+   376 00000443 48890425[EB000000]          mov     [dirVectMovimientos],rax
+   377                                  
+   378                                      ; saco el zorro de su posición anterior.
+   379 0000044B 4C8B0425[F3000000]          mov     r8,[filaZorro] ;fila guardada como qword
+   380 00000453 4C0FAF0425-                 imul    r8,[longitudFila]
+   380 00000458 [33000000]         
+   381 0000045C 4C8B0C25[FB000000]          mov     r9,[colZorro] ;columna guardada como qword
+   382 00000464 4C0FAF0C25-                 imul    r9,[longitudElemento]
+   382 00000469 [3B000000]         
+   383 0000046D 4D01C8                      add     r8,r9
+   384 00000470 4981C0[00000000]            add     r8,tablero
+   385                                  
+   386 00000477 8A0425[32000000]            mov     al,byte[repEspacio]
+   387 0000047E 418800                      mov     byte[r8],al ; dejo un espacio en la posición del zorro
+   388                                  
+   389                                      ; pongo el zorro en la nueva posición.
+   390 00000481 488B0425[EB000000]          mov     rax,[dirVectMovimientos]
+   391 00000489 41B800000000                mov     r8,0
+   392 0000048F 448A4001                    mov     r8b,[rax+1]         ;fila guardada como byte
+   393 00000493 4C0FAF0425-                 imul    r8,[longitudFila]
+   393 00000498 [33000000]         
+   394 0000049C 41B900000000                mov     r9,0
+   395 000004A2 448A4802                    mov     r9b,[rax+2]          ;columna guardada como byte
+   396 000004A6 4C0FAF0C25-                 imul    r9,[longitudElemento]
+   396 000004AB [3B000000]         
+   397 000004AF 4D01C8                      add     r8,r9
+   398 000004B2 4981C0[00000000]            add     r8,tablero
+   399                                  
+   400 000004B9 8A1C25[31000000]            mov     bl,byte[repZorro]
+   401 000004C0 418818                      mov     byte[r8],bl
+   402                                  
+   403                                      ; verifico si fue un movimiento para comer una oca
+   404                                      ; si lo fue, remuevo la oca de su lugar e incremento
+   405                                      ; la variable ocasComidas
+   406 000004C3 448A5803                    mov     r11b,[rax+3]
+   407 000004C7 4180FB00                    cmp     r11b,0        ; 1=movComerOca 0=movNormal
+   408 000004CB 0F8494000000                je      finRealizarMovimiento
+   409                                      ; calculo la posicion de la oca comida como
+   410                                      ; (anteriorPosZorro + nuevaPosZorro) / 2
+   411 000004D1 488B0425[EB000000]          mov     rax,[dirVectMovimientos]
+   412 000004D9 41B800000000                mov     r8,0
+   413 000004DF 448A4001                    mov     r8b,[rax+1]
+   414 000004E3 4C030425[F3000000]          add     r8,[filaZorro]
+   415                                  
+   416 000004EB BA00000000                  mov     rdx,0
+   417 000004F0 4C89C0                      mov     rax,r8
+   418 000004F3 41BA02000000                mov     r10,2
+   419 000004F9 49F7FA                      idiv    r10
+   420 000004FC 4989C0                      mov     r8,rax
+   421                                  
+   422 000004FF 4C0FAF0425-                 imul    r8,[longitudFila]
+   422 00000504 [33000000]         
+   423                                  
+   424 00000508 488B0425[EB000000]          mov     rax,[dirVectMovimientos]
+   425 00000510 41B900000000                mov     r9,0
+   426 00000516 448A4802                    mov     r9b,[rax+2]
+   427 0000051A 4C030C25[FB000000]          add     r9,[colZorro]
+   428                                  
+   429 00000522 BA00000000                  mov     rdx,0
+   430 00000527 4C89C8                      mov     rax,r9
+   431 0000052A 41BA02000000                mov     r10,2
+   432 00000530 49F7FA                      idiv    r10
+   433 00000533 4989C1                      mov     r9,rax
+   434                                  
+   435 00000536 4C0FAF0C25-                 imul    r9,[longitudElemento]
+   435 0000053B [3B000000]         
+   436 0000053F 4D01C8                      add     r8,r9
+   437 00000542 4981C0[00000000]            add     r8,tablero
+   438                                  
+   439 00000549 8A1C25[32000000]            mov     bl,byte[repEspacio]
+   440 00000550 418818                      mov     byte[r8],bl
+   441                                  
+   442 00000553 488B0425[E3000000]          mov     rax,[dirTablero]
+   443 0000055B 4883C035                    add     rax,53 ; rax = dirOcasComidas
+   444 0000055F 8A18                        mov     bl,byte[rax]
+   445 00000561 FEC3                        inc     bl
+   446 00000563 8818                        mov     byte[rax],bl
+   447                                  
+   448                                  finRealizarMovimiento:
+   449 00000565 B800000000                  mov     rax,0
+   450 0000056A 4488D8                      mov     al,r11b
+   451 0000056D C3                          ret
+   452                                  
+   453                                  ; busca la posición del zorro en el tablero que incia en la direccion rdi
+   454                                  ; devuelve la fila en rax y la columna en rbx
+   455                                  ; devuelve valores para usar directamente en código, es decir números entre 0 y 6
+   456                                  ; si no se encuentra el zorro, devuelve -1 en rax (no debería pasar nunca)
+   457                                  buscarZorro:
+   458 0000056E 48C70425[D3000000]-         mov     qword[iteradorFila],0
+   458 00000576 00000000           
+   459 0000057A 48C70425[DB000000]-         mov     qword[iteradorCol],0
+   459 00000582 00000000           
+   460                                  buscarZorroBucle:
+   461 00000586 48833C25[DB000000]-         cmp     qword[iteradorCol],7
+   461 0000058E 07                 
+   462 0000058F 7D3D                        jge     buscarZorroProximaFila
+   463                                  
+   464 00000591 488B0425[3B000000]          mov     rax,qword[longitudElemento]
+   465 00000599 480FAF0425-                 imul    rax,qword[iteradorCol]
+   465 0000059E [DB000000]         
+   466                                  
+   467 000005A2 488B1C25[33000000]          mov     rbx,qword[longitudFila]
+   468 000005AA 480FAF1C25-                 imul    rbx,qword[iteradorFila]
+   468 000005AF [D3000000]         
+   469                                  
+   470 000005B3 4801D8                      add     rax,rbx
+   471 000005B6 4801F8                      add     rax,rdi
+   472                                  
+   473 000005B9 8A18                        mov     bl,byte[rax]
+   474 000005BB 3A1C25[31000000]            cmp     bl,[repZorro]
+   475 000005C2 7433                        je      buscarZorroEncontrado
+   476                                  
+   477 000005C4 48FF0425[DB000000]          inc     qword[iteradorCol]
+   478 000005CC EBB8                        jmp     buscarZorroBucle
+   479                                  
+   480                                  buscarZorroProximaFila:
+   481 000005CE 48833C25[D3000000]-         cmp     qword[iteradorFila],7
+   481 000005D6 07                 
+   482 000005D7 7D16                        jge     buscarZorroNoEncontrado
+   483 000005D9 48FF0425[D3000000]          inc     qword[iteradorFila]
+   484 000005E1 48C70425[DB000000]-         mov     qword[iteradorCol],0
+   484 000005E9 00000000           
+   485 000005ED EB97                        jmp     buscarZorroBucle
+   486                                  
+   487                                  buscarZorroNoEncontrado:
+   488 000005EF 48C7C0FFFFFFFF              mov     rax,-1
+   489 000005F6 C3                          ret
+   490                                      
+   491                                  buscarZorroEncontrado:
+   492 000005F7 488B1C25[DB000000]          mov     rbx,[iteradorCol]
+   493 000005FF 488B0425[D3000000]          mov     rax,[iteradorFila]
+   494 00000607 C3                          ret
+   495                                  
+   496                                  
+   497                                  
+   498                                  
+   499                                  ; recibe en rdi la direccion del tablero
+   500                                  ;
+   501                                  MostrarTablero:
+   502 00000608 48893C25[E3000000]          mov     [dirTablero],rdi
+   503 00000610 4883C732                    add     rdi,50 ; simbolo ocas
+   504 00000614 8A07                        mov     al,[rdi]
+   505 00000616 880425[4D000000]            mov     [simboloOcas],al
+   506 0000061D 4883C701                    add     rdi,1 ; simbolo zorro
+   507 00000621 8A07                        mov     al,[rdi]
+   508 00000623 880425[4C000000]            mov     [simboloZorro],al
+   509 0000062A 4883C70B                    add     rdi,11 ; me muevo hasta la posicion de movimientos posibles
+   510 0000062E 48893C25[EB000000]          mov     [dirVectMovimientos],rdi
+   511                                  
+   512                                      Mprintf ANSIColorMarco
+     2 00000636 48BF-               <1>  mov rdi,%1
+     2 00000638 [EE00000000000000]  <1>
+     3 00000640 4883EC08            <1>  sub rsp,8
+     4 00000644 E8(00000000)        <1>  call printf
+     5 00000649 4883C408            <1>  add rsp,8
+   513                                      Mprintf mostrarLineaColumnas
+     2 0000064D 48BF-               <1>  mov rdi,%1
+     2 0000064F [5100000000000000]  <1>
+     3 00000657 4883EC08            <1>  sub rsp,8
+     4 0000065B E8(00000000)        <1>  call printf
+     5 00000660 4883C408            <1>  add rsp,8
+   514                                      Mprintf ANSIResetColor
+     2 00000664 48BF-               <1>  mov rdi,%1
+     2 00000666 [E900000000000000]  <1>
+     3 0000066E 4883EC08            <1>  sub rsp,8
+     4 00000672 E8(00000000)        <1>  call printf
+     5 00000677 4883C408            <1>  add rsp,8
+   515                                                                              ; marco las líneas que se pueden copiar y pegar para hacer
+   516 0000067B 48C70425[D3000000]-         mov     qword[iteradorFila],0           ; la estructura de un loop que itera sobre todo el tablero
+   516 00000683 00000000           
+   517 00000687 48C70425[DB000000]-         mov     qword[iteradorCol],0            ;
+   517 0000068F 00000000           
+   518 00000693 48C70425[C3000000]-         mov     qword[iterador],0               ;Este el el iterador para el vector de mov posibles
+   518 0000069B 00000000           
+   519                                     
+   520                                      Mprintf ANSIColorMarco
+     2 0000069F 48BF-               <1>  mov rdi,%1
+     2 000006A1 [EE00000000000000]  <1>
+     3 000006A9 4883EC08            <1>  sub rsp,8
+     4 000006AD E8(00000000)        <1>  call printf
+     5 000006B2 4883C408            <1>  add rsp,8
+   521 000006B6 4C8B0425[D3000000]          mov     r8,[iteradorFila]
+   522 000006BE 49FFC0                      inc     r8
+   523                                      Mprintf mostrarFila,r8
+     8 000006C1 48BF-               <1>  mov rdi,%1
+     8 000006C3 [7300000000000000]  <1>
+     9 000006CB 4C89C6              <1>  mov rsi,%2
+    10 000006CE 4883EC08            <1>  sub rsp,8
+    11 000006D2 E8(00000000)        <1>  call printf
+    12 000006D7 4883C408            <1>  add rsp,8
+   524                                      Mprintf ANSIResetColor
+     2 000006DB 48BF-               <1>  mov rdi,%1
+     2 000006DD [E900000000000000]  <1>
+     3 000006E5 4883EC08            <1>  sub rsp,8
+     4 000006E9 E8(00000000)        <1>  call printf
+     5 000006EE 4883C408            <1>  add rsp,8
+   525                                  
+   526                                  mostrarTableroLoop:
+   527 000006F2 48833C25[DB000000]-         cmp    qword[iteradorCol],7
+   527 000006FA 07                 
+   528 000006FB 7473                        je     mostrarTableroProximaFila
+   529                                  
+   530 000006FD 4883EC08                    sub     rsp,8
+   531 00000701 E8B6010000                  call    buscarFilColEnMovPosibles
+   532 00000706 4883C408                    add     rsp,8
+   533 0000070A 4883F800                    cmp     rax,0
+   534 0000070E 743C                        je      mostrarElementoEnTablero
+   535                                  
+   536 00000710 488B1425[3B000000]          mov     rdx,qword[longitudElemento]
+   537 00000718 480FAF1425-                 imul    rdx,qword[iteradorCol]
+   537 0000071D [DB000000]         
+   538                                  
+   539 00000721 488B1C25[33000000]          mov     rbx,qword[longitudFila]
+   540 00000729 480FAF1C25-                 imul    rbx,qword[iteradorFila]
+   540 0000072E [D3000000]         
+   541                                  
+   542 00000732 4801DA                      add     rdx,rbx
+   543 00000735 48031425[E3000000]          add     rdx,[dirTablero]
+   544                                                                              ; aqui ingresar lógica para cada elemento del tablero
+   545                                                                              ; el elemento está cargado en el registro bl
+   546 0000073D 8A1A                        mov     bl,byte[rdx]
+   547 0000073F 4883EC08                    sub     rsp,8
+   548 00000743 E84F010000                  call    identificarSimbolo
+   549 00000748 4883C408                    add     rsp,8
+   550                                  
+   551                                  mostrarElementoEnTablero:
+   552                                      Mprintf mostrarElemento,rdx
+     8 0000074C 48BF-               <1>  mov rdi,%1
+     8 0000074E [6E00000000000000]  <1>
+     9 00000756 4889D6              <1>  mov rsi,%2
+    10 00000759 4883EC08            <1>  sub rsp,8
+    11 0000075D E8(00000000)        <1>  call printf
+    12 00000762 4883C408            <1>  add rsp,8
+   553                                  
+   554 00000766 48FF0425[DB000000]          inc     qword[iteradorCol]              ;
+   555 0000076E EB82                        jmp     mostrarTableroLoop              ;
+   556                                  
+   557                                  mostrarTableroProximaFila:                  ;
+   558                                      Mprintf ANSIColorMarco
+     2 00000770 48BF-               <1>  mov rdi,%1
+     2 00000772 [EE00000000000000]  <1>
+     3 0000077A 4883EC08            <1>  sub rsp,8
+     4 0000077E E8(00000000)        <1>  call printf
+     5 00000783 4883C408            <1>  add rsp,8
+   559 00000787 4C8B0425[D3000000]          mov     r8,[iteradorFila]
+   560 0000078F 49FFC0                      inc     r8
+   561                                      Mprintf mostrarFila,r8
+     8 00000792 48BF-               <1>  mov rdi,%1
+     8 00000794 [7300000000000000]  <1>
+     9 0000079C 4C89C6              <1>  mov rsi,%2
+    10 0000079F 4883EC08            <1>  sub rsp,8
+    11 000007A3 E8(00000000)        <1>  call printf
+    12 000007A8 4883C408            <1>  add rsp,8
+   562                                      Mprintf ANSIResetColor
+     2 000007AC 48BF-               <1>  mov rdi,%1
+     2 000007AE [E900000000000000]  <1>
+     3 000007B6 4883EC08            <1>  sub rsp,8
+     4 000007BA E8(00000000)        <1>  call printf
+     5 000007BF 4883C408            <1>  add rsp,8
+   563                                      Mprintf nuevaLinea
+     2 000007C3 48BF-               <1>  mov rdi,%1
+     2 000007C5 [4F00000000000000]  <1>
+     3 000007CD 4883EC08            <1>  sub rsp,8
+     4 000007D1 E8(00000000)        <1>  call printf
+     5 000007D6 4883C408            <1>  add rsp,8
+   564                                  
+   565 000007DA 48FF0425[D3000000]          inc     qword[iteradorFila]             ;
+   566 000007E2 48C70425[DB000000]-         mov     qword[iteradorCol],0            ;
+   566 000007EA 00000000           
+   567                                  
+   568 000007EE 48833C25[D3000000]-         cmp     qword[iteradorFila],7           ;
+   568 000007F6 07                 
+   569 000007F7 7D58                        jge     mostrarTableroFin               ;
+   570                                  
+   571                                      Mprintf ANSIColorMarco
+     2 000007F9 48BF-               <1>  mov rdi,%1
+     2 000007FB [EE00000000000000]  <1>
+     3 00000803 4883EC08            <1>  sub rsp,8
+     4 00000807 E8(00000000)        <1>  call printf
+     5 0000080C 4883C408            <1>  add rsp,8
+   572 00000810 4C8B0425[D3000000]          mov     r8,[iteradorFila]
+   573 00000818 49FFC0                      inc     r8
+   574                                      Mprintf mostrarFila,r8
+     8 0000081B 48BF-               <1>  mov rdi,%1
+     8 0000081D [7300000000000000]  <1>
+     9 00000825 4C89C6              <1>  mov rsi,%2
+    10 00000828 4883EC08            <1>  sub rsp,8
+    11 0000082C E8(00000000)        <1>  call printf
+    12 00000831 4883C408            <1>  add rsp,8
+   575                                      Mprintf ANSIResetColor
+     2 00000835 48BF-               <1>  mov rdi,%1
+     2 00000837 [E900000000000000]  <1>
+     3 0000083F 4883EC08            <1>  sub rsp,8
+     4 00000843 E8(00000000)        <1>  call printf
+     5 00000848 4883C408            <1>  add rsp,8
+   576                                  
+   577 0000084C E9A1FEFFFF                  jmp     mostrarTableroLoop              ;
+   578                                  
+   579                                  mostrarTableroFin:
+   580                                      Mprintf ANSIColorMarco
+     2 00000851 48BF-               <1>  mov rdi,%1
+     2 00000853 [EE00000000000000]  <1>
+     3 0000085B 4883EC08            <1>  sub rsp,8
+     4 0000085F E8(00000000)        <1>  call printf
+     5 00000864 4883C408            <1>  add rsp,8
+   581                                      Mprintf mostrarLineaColumnas
+     2 00000868 48BF-               <1>  mov rdi,%1
+     2 0000086A [5100000000000000]  <1>
+     3 00000872 4883EC08            <1>  sub rsp,8
+     4 00000876 E8(00000000)        <1>  call printf
+     5 0000087B 4883C408            <1>  add rsp,8
+   582                                      Mprintf ANSIResetColor
+     2 0000087F 48BF-               <1>  mov rdi,%1
+     2 00000881 [E900000000000000]  <1>
+     3 00000889 4883EC08            <1>  sub rsp,8
+     4 0000088D E8(00000000)        <1>  call printf
+     5 00000892 4883C408            <1>  add rsp,8
+   583 00000896 C3                          ret
+   584                                  
+   585                                  ;   en bl está el código del elemento en tablero
+   586                                  ;   devuelve en al el caracter que representa ese elemento
+   587                                  identificarSimbolo:
+   588 00000897 BA00000000                  mov     rdx,0
+   589 0000089C 80FBFF                      cmp     bl,-1
+   590 0000089F 740F                        je      esInaccesible
+   591 000008A1 80FB00                      cmp     bl,0
+   592 000008A4 740D                        je      esEspacio
+   593 000008A6 80FB01                      cmp     bl,1
+   594 000008A9 740B                        je      esOca
+   595 000008AB 80FB02                      cmp     bl,2
+   596 000008AE 7409                        je      esZorro
+   597                                  esInaccesible:
+   598 000008B0 B223                        mov     dl,35
+   599 000008B2 C3                          ret
+   600                                  esEspacio:
+   601 000008B3 B220                        mov     dl,32
+   602 000008B5 C3                          ret
+   603                                  esOca:
+   604 000008B6 B24F                        mov     dl,79
+   605 000008B8 C3                          ret
+   606                                  esZorro:
+   607 000008B9 B258                        mov     dl,88
+   608 000008BB C3                          ret
+   609                                  
+   610                                  buscarFilColEnMovPosibles:
+   611 000008BC 48C7C0FFFFFFFF              mov     rax,-1 ;por default no se encuentra nada
+   612 000008C3 BB00000000                  mov     rbx,0
+   613 000008C8 B900000000                  mov     rcx,0
+   614                                  
+   615 000008CD 48833C25[C3000000]-         cmp     qword[iterador],8
+   615 000008D5 08                 
+   616 000008D6 745E                        je      finalizarBusqueda
+   617                                  
+   618 000008D8 488B0C25[C3000000]          mov     rcx,[iterador]
+   619 000008E0 486BC904                    imul    rcx,4 
+   620 000008E4 48030C25[EB000000]          add     rcx,[dirVectMovimientos]
+   621 000008EC 8A19                        mov     bl,byte[rcx]
+   622 000008EE 80FBFF                      cmp     bl,-1
+   623 000008F1 7443                        je      finalizarBusqueda
+   624                                  
+   625 000008F3 881C25[03010000]            mov     [numActual],bl
+   626                                  
+   627 000008FA 488B1C25[D3000000]          mov     rbx,[iteradorFila]
+   628 00000902 3A5901                      cmp     bl,byte[rcx+1]
+   629 00000905 7525                        jne     incrementarIterador
+   630                                  
+   631 00000907 488B1C25[DB000000]          mov     rbx,[iteradorCol]
+   632 0000090F 3A5902                      cmp     bl,byte[rcx+2]
+   633 00000912 7518                        jne     incrementarIterador
+   634                                  
+   635 00000914 48830425[03010000]-         add     qword[numActual],48
+   635 0000091C 30                 
+   636 0000091D 488B1425[03010000]          mov     rdx,[numActual]
+   637 00000925 B800000000                  mov     rax,0
+   638 0000092A EB0A                        jmp     finalizarBusqueda
+   639                                  
+   640                                  incrementarIterador:
+   641 0000092C 48FF0425[C3000000]          inc     qword[iterador]
+   642 00000934 EB86                        jmp     buscarFilColEnMovPosibles
+   643                                  finalizarBusqueda:
+   644 00000936 48C70425[C3000000]-         mov     qword[iterador],0
+   644 0000093E 00000000           
+   645 00000942 C3                          ret
