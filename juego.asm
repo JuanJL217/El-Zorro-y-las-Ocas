@@ -49,8 +49,9 @@ extern VerificarMovimientoZorro
 extern ContarOcas
 extern CalcularMovimientosZorro
 extern FiltrarMovimientosQueNoComenOcas
-
+extern ValidarEntradaTurnoZorro
 extern copiarTablero
+extern RealizarMovimientoZorro
 
 section .data
     mensajeMainMenu             db "        ** MENÚ PRINCIPAL **",10,10,"Bienvenido al juego del Zorro y las Ocas!",10,"Seleccione una opción para jugar (ingresar número de opción)",10,"  0 - Cargar Partida",10,"  1 - Nueva Partida",10,0
@@ -81,8 +82,8 @@ section .data
     orientacionSur              db "S"
     orientacionEste             db "E"
     orientacionOeste            db "O"
-    caracterGuardarPartida              db "G"
-    caracterSalirDelJuego               db "S"
+    caracterGuardarPartida      db "G"
+    caracterSalirDelJuego       db "S"
     turnoDelZorro               db 1
     turnoDeLasOcas              db 0
     ; -1 espacios inaccesibles | 0 espacio | 1 oca | 2 zorro 
@@ -441,10 +442,6 @@ turnoExtraZorro:
 
     Mprintf mostrarControlesZorro
     jmp     zorroIngresarJugada
-
-zorroIngresarJugada:
-    Mgets   inputBuffer
-
 
 verificarFinDeLaPartida:
     MLimpiarPantalla

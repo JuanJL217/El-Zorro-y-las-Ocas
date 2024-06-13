@@ -1,6 +1,7 @@
 global ValidarMenu
 global ValidarPersonalizacion
 global ValidarOrientacion
+global ValidarEntradaTurnoZorro
 
 section .data
     menuOpcionCargarPartida             db "0",0
