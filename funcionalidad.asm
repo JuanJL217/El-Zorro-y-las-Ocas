@@ -19,6 +19,7 @@ global VerificarMovimientoZorro
 global ContarOcas
 global CalcularMovimientosZorro
 global RealizarMovimientoZorro
+global FiltrarMovimientosQueNoComenOcas
 
 extern printf
 
@@ -47,6 +48,7 @@ section .data
 section .bss
     iteradorFila            resq 1
     iteradorCol             resq 1
+    iterador                resq 1
     dirTablero              resq 1
     dirVectMovimientos      resq 1
     simboloZorro            resb 1
@@ -291,13 +293,6 @@ movimientoFilaBucle:
     add     rax,[dirTablero]
     mov     bl,byte[rax]
 
-    mov     rdi,mostrarInt
-    mov     rsi,0
-    mov     sil,bl
-    sub     rsp,8
-    call    printf
-    add     rsp,8
-
     cmp     bl,0
     jne     verSiComeOca
     
@@ -446,7 +441,7 @@ movEncontrado:
     mov     r9,[colZorro] ;columna guardada como qword
     imul    r9,[longitudElemento]
     add     r8,r9
-    add     r8,tablero
+    add     r8,[dirTablero]
 
     mov     al,byte[repEspacio]
     mov     byte[r8],al ; dejo un espacio en la posición del zorro
@@ -460,7 +455,7 @@ movEncontrado:
     mov     r9b,[rax+2]          ;columna guardada como byte
     imul    r9,[longitudElemento]
     add     r8,r9
-    add     r8,tablero
+    add     r8,[dirTablero]
 
     mov     bl,byte[repZorro]
     mov     byte[r8],bl
@@ -499,7 +494,7 @@ movEncontrado:
 
     imul    r9,[longitudElemento]
     add     r8,r9
-    add     r8,tablero
+    add     r8,[dirTablero]
 
     mov     bl,byte[repEspacio]
     mov     byte[r8],bl
@@ -535,7 +530,7 @@ buscarMovimientosComedores:
     mov     eax,dword[rdi]
     mov     rbx,[dirVectMovimientos]
     mov     [rbx],eax
-    inc     qword[dirVectMovimientos],4
+    add     qword[dirVectMovimientos],4
 
 sigMovimiento:
     add     rdi,4
