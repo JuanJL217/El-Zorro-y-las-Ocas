@@ -54,6 +54,7 @@ section .bss
     filaZorro               resq 1
     colZorro                resq 1
     movActual               resb 1
+    contador                resq 1
 
 section .text
 
@@ -219,11 +220,31 @@ VerificarMovimientoOcas:
 ; Falta implementar
     ret
 
+; recibe en rdi la dirección del tablero
+; guarda en rax 0 si no hay movimientos disponibles, 1 si hay movimientos disponibles
 VerificarMovimientoZorro:
-; Falta implementar
+    mov     [dirTablero],rdi     
+    
+    sub     rsp,8
+    call    CalcularMovimientosZorro
+    add     rsp,8
+
+    mov     rdi,[dirTablero]
+    add     rdi,62              
+    mov     [dirVectMovimientos],rdi
+
+    mov     al,byte[dirVectMovimientos]
+    cmp     al,-1
+    je      zorroNoTieneMovimientosDisponibles
+    mov     rax,1
+    ret
+
+zorroNoTieneMovimientosDisponibles:
+    mov     rax,0
     ret
 
 ; rdi = tablero
+; guarda en movimientosPosibles los movimientos que puede realizar el zorro desde su posición
 CalcularMovimientosZorro:
     mov     [dirTablero],rdi
     sub     rsp,8
@@ -381,7 +402,8 @@ finCalcMovimientos:
     ret
 
 ; rdi = tablero
-; sil = nroMov
+; sil = nroMov (validado previamente)
+; actualiza la posición del zorro según el numero de movimiento ingresado (debe ser valido)
 ; si NO comio una oca, devuelve 0 en rax
 ; si comio una oca, actualiza ocasComidas y devuelve en rax 1 
 RealizarMovimientoZorro:
@@ -494,4 +516,41 @@ finRealizarMovimiento:
     mov     rax,0
     mov     al,r11b
 
+    ret
+
+; recibe en rdi el vector movimientosPosibles
+; debe guardar en movimientosPosibles sólo los movimientos posibles que sean para comer ocas.
+; devuelve en el rax la cantidad de movimientos que comen ocas disponibles.
+; si no hay movimientos disponibles para comer ocas, devuelve 0.
+FiltrarMovimientosQueNoComenOcas:
+    mov     [dirVectMovimientos],rdi
+    mov     qword[contador],0
+
+buscarMovimientosComedores:
+    cmp     byte[rdi],-1
+    je      finBuscarMovimientosComedores
+
+    cmp     byte[rdi+3],1
+    jne     sigMovimiento
+
+    inc     qword[contador]
+    mov     eax,dword[rdi]
+    mov     rbx,[dirVectMovimientos]
+    mov     [rbx],eax
+    inc     qword[dirVectMovimientos],4
+
+sigMovimiento:
+    add     rdi,4
+    jmp     buscarMovimientosComedores
+
+finBuscarMovimientosComedores:
+    cmp     qword[contador],0
+    je      finFiltrarMovimientos
+    ; si había movimientos para comer ocas, actualizo el final del vector movimientoPosibles
+    mov     rbx,[dirVectMovimientos]
+    add     rbx,4
+    mov     byte[rbx],-1
+
+finFiltrarMovimientos:
+    mov     rax,qword[contador]
     ret
