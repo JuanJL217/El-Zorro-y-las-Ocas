@@ -19,6 +19,7 @@ global VerificarMovimientoZorro
 global ContarOcas
 global CalcularMovimientosZorro
 global RealizarMovimientoZorro
+global FiltrarMovimientosQueNoComenOcas
 
 global FiltrarMovimientosQueNoComenOcas
 
@@ -49,6 +50,7 @@ section .data
 section .bss
     iteradorFila            resq 1
     iteradorCol             resq 1
+    iterador                resq 1
     dirTablero              resq 1
     dirVectMovimientos      resq 1
     simboloZorro            resb 1
