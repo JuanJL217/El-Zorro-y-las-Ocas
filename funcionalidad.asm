@@ -40,15 +40,21 @@ section .data
     mostrarFila             db " %li ",0
 
     ; ANSI
-    ANSIBoldOn              db 27,"[1m",0
-    ANSIBoldOff             db 27,"[22m",0
-    ANSIResetColor          db 27,"[0m",0
-    ANSIColorMarco          db 27,"[38;5;88m",0
+    ANSIBoldOn                      db 27,"[1m",0
+    ANSIItalicOn                    db 27,"[3m",0
+    ANSIBoldOff                     db 27,"[22m",0
+    ANSIItalicOff                   db 27,"[23m",0
+    ANSIResetColor                  db 27,"[0m",0
+    
+    ANSIColorOcas                   db 27,"[38;5;24m",0
+    ANSIColorZorro                  db 27,"[38;5;88m",0
+    ANSIColorInaccesible            db 27,"[38;5;231m",0
+    ANSIColorMarco                  db 27,"[38;5;255m",0
+    ANSIColorMostrarMovimiento      db 27,"[38;5;8m",0
 
 section .bss
     iteradorFila            resq 1
     iteradorCol             resq 1
-    iterador                resq 1
     dirTablero              resq 1
     dirVectMovimientos      resq 1
     simboloZorro            resb 1
@@ -158,7 +164,8 @@ mostrarTableroLoop:
     call    identificarSimbolo
     add     rsp,8
 
-    Mprintf mostrarElemento,rax
+mostrarElementoEnTablero:
+    Mprintf mostrarElemento,rdx
 
     inc     qword[iteradorCol]              ;
     jmp     mostrarTableroLoop              ;
@@ -204,16 +211,16 @@ identificarSimbolo:
     cmp     bl,2
     je      esZorro
 esInaccesible:
-    mov     al,[simboloInaccesible]
+    mov     dl,[simboloInaccesible]
     ret
 esEspacio:
     mov     al,[simboloEspacio]
     ret
 esOca:
-    mov     al,[simboloOcas]
+    mov     dl,[simboloOcas]
     ret
 esZorro:
-    mov     al,[simboloZorro]
+    mov     dl,[simboloZorro]
     ret
 
 VerificarMovimientoOcas:
@@ -546,4 +553,46 @@ finBuscarMovimientosComedores:
 
 finFiltrarMovimientos:
     mov     rax,qword[contador]
+    ret
+
+
+
+;Busca en el vector de movimientos posibles si está la posicion actual de la matriz
+;numero representado como ASCII del movimiento correspondiente en el registro rdx y un 0 en rax
+;rax = -1 si no encontro la posicion
+buscarFilColEnMovPosibles:
+    mov     rax,-1 ;por default no se encuentra nada
+    mov     rbx,0  ;limpio los registros por las dudas
+    mov     rcx,0 
+
+    cmp     qword[iterador],8          ;como mucho se va a iterar un total de 9 veces (caso de maximo movimientos posibles)
+    je      finalizarBusqueda
+
+    mov     rcx,[iterador]
+    imul    rcx,4 
+    add     rcx,[dirVectMovimientos]
+    mov     bl,byte[rcx]
+    cmp     bl,-1                       ;se llego al final del vector de movimientos
+    je      finalizarBusqueda
+
+    mov     [numActual],bl
+
+    mov     rbx,[iteradorFila]
+    cmp     bl,byte[rcx+1]
+    jne     incrementarIterador
+
+    mov     rbx,[iteradorCol]
+    cmp     bl,byte[rcx+2]
+    jne     incrementarIterador
+
+    add     qword[numActual],48         ; para representar el numero como caracter
+    mov     rdx,[numActual]
+    mov     rax,0
+    jmp     finalizarBusqueda
+
+incrementarIterador:
+    inc     qword[iterador]
+    jmp     buscarFilColEnMovPosibles
+finalizarBusqueda:
+    mov     qword[iterador],0
     ret

@@ -48,11 +48,8 @@ extern VerificarMovimientoOcas
 extern VerificarMovimientoZorro
 extern ContarOcas
 extern CalcularMovimientosZorro
-extern ValidarEntradaTurnoZorro
-extern RealizarMovimientoZorro
 extern FiltrarMovimientosQueNoComenOcas
-
-
+extern ValidarEntradaTurnoZorro
 extern copiarTablero
 
 section .data
@@ -122,7 +119,7 @@ section .data
     tableroOeste6               db -1,-1, 1, 1, 1,-1,-1
 
 section .bss
-    registroDatosPartida    times 0 resb 94 ; Es una etiqueta (apunta a exactamente lo mismo que la etiqueta "tablero")
+    registroDatosPartida    times 0 resb 95 ; Es una etiqueta (apunta a exactamente lo mismo que la etiqueta "tablero")
     ; Variables de partida - en orden específico para poder acceder a todas desde diferentes rutinas
     ; ¡IMPORTANTE! -> TODOS ESTOS DATOS ESTÁN EN UN BYTE CADA UNO, PARA OPERAR CON ELLOS HAY QUE USAR REGISTROS DE 8 BITS (al,bl,cl,dl,ah,bh,ch,dh,...)
     tablero                 times 7 resb 7
@@ -182,7 +179,7 @@ cargarPartida:
     ; Sino, cargo la partida
     mov             qword[idArchivoGuardado],rax
     mov             rdi,registroDatosPartida
-    mov             rsi,94
+    mov             rsi,95
     mov             rdx,1
     mov             rcx,[idArchivoGuardado]
     sub             rsp,8
@@ -282,7 +279,7 @@ orientacionOpcionInvalida:
 
 personalizarOcas:
     Mprintf     mensajeIngresarSimboloOcas
-personalizarOcasIngresarOpcion:
+ocasIngresarOpcion:
     Mgets           inputBuffer
     ; Si se ingresa el mismo símbolo que para el zorro, es inválido
     mov             al,[simboloZorro]
@@ -298,7 +295,7 @@ personalizarOcasIngresarOpcion:
     jmp             personalizacionMostrar
 ocasOpcionInvalida:
     Mprintf         mensajeCaracterInvalido
-    jmp             personalizarOcasIngresarOpcion
+    jmp             ocasIngresarOpcion
 
 personalizarZorro:
     Mprintf     mensajeIngresarSimboloZorro
@@ -503,7 +500,7 @@ guardarPartida:
     ; Sino, guardo la partida
     mov             qword[idArchivoGuardado],rax
     mov             rdi,registroDatosPartida
-    mov             rsi,94
+    mov             rsi,95
     mov             rdx,1
     mov             rcx,[idArchivoGuardado]
     sub             rsp,8
