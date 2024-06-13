@@ -50,6 +50,7 @@ extern ContarOcas
 extern CalcularMovimientosZorro
 extern FiltrarMovimientosQueNoComenOcas
 extern ValidarEntradaTurnoZorro
+extern RealizarMovimientoZorro
 extern copiarTablero
 
 section .data
