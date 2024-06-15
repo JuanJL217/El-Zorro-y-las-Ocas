@@ -2,6 +2,10 @@ global ValidarMenu
 global ValidarPersonalizacion
 global ValidarOrientacion
 global ValidarEntradaTurnoZorro
+global ValidarMovimientoOca
+global ValidarPosicionOca
+global ValidarFilaColumna
+global ValidarEntradaElegirOca
 
 section .data
     menuOpcionCargarPartida             db "0",0
@@ -19,25 +23,30 @@ section .data
 
     caracterGuardarPartida              db "G"
     caracterSalirDelJuego               db "S"
+    caracterElegirOca                   db "O"
+
+    repOcas                             db 1
+    longitudElemento                    dq 1
+    longitudFila                        dq 7
 
 section .bss
-    bufferEntradaValidar                resq 1
     dirVectMovimientos                  resq 1
     movimientoIngresado                 resb 1
     iterador                            resq 1
+    caracterAValidar                    resb 1
 
 section .text
 
 ValidarMenu:
-    mov     rax,[rdi]
-    mov     [bufferEntradaValidar],rax
+    mov     al,[rdi]
+    mov     [caracterAValidar],al
 
     mov     al,[menuOpcionCargarPartida]
-    cmp     al,[bufferEntradaValidar]
+    cmp     al,[caracterAValidar]
     je      menuEligeCargarPartida
 
     mov     al,[menuOpcionNuevaPartida]
-    cmp     al,[bufferEntradaValidar]
+    cmp     al,[caracterAValidar]
     je      menuEligeNuevaPartida
 
 menuOpcionInvalida:
@@ -55,23 +64,23 @@ menuEligeNuevaPartida:
 
 ValidarPersonalizacion:
 
-    mov     rax,[rdi]
-    mov     [bufferEntradaValidar],rax
+    mov     al,[rdi]
+    mov     [caracterAValidar],al
 
     mov     al,[personalizacionOrientacion]
-    cmp     al,[bufferEntradaValidar]
+    cmp     al,[caracterAValidar]
     je      persoEligeOrientacion
 
     mov     al,[personalizacionOcas]
-    cmp     al,[bufferEntradaValidar]
+    cmp     al,[caracterAValidar]
     je      persoEligeOcas
 
     mov     al,[personalizacionZorro]
-    cmp     al,[bufferEntradaValidar]
+    cmp     al,[caracterAValidar]
     je      persoEligeZorro
 
     mov     al,[personalizacionSalir]
-    cmp     al,[bufferEntradaValidar]
+    cmp     al,[caracterAValidar]
     je      persoEligeSalir
 
 persoOpcionInvalida:
@@ -96,23 +105,23 @@ persoEligeSalir:
 
 
 ValidarOrientacion:
-    mov     rax,[rdi]
-    mov     [bufferEntradaValidar],rax
+    mov     al,[rdi]
+    mov     [caracterAValidar],al
 
     mov     al,[orientacionNorte]
-    cmp     al,[bufferEntradaValidar]
+    cmp     al,[caracterAValidar]
     je      orientacionEligeNorte
 
     mov     al,[orientacionSur]
-    cmp     al,[bufferEntradaValidar]
+    cmp     al,[caracterAValidar]
     je      orientacionEligeSur
 
     mov     al,[orientacionEste]
-    cmp     al,[bufferEntradaValidar]
+    cmp     al,[caracterAValidar]
     je      orientacionEligeEste
 
     mov     al,[orientacionOeste]
-    cmp     al,[bufferEntradaValidar]
+    cmp     al,[caracterAValidar]
     je      orientacionEligeOeste
 
 orientacionInvalida:
@@ -145,22 +154,21 @@ orientacionEligeOeste:
 ValidarEntradaTurnoZorro:
     mov     [dirVectMovimientos],rdi
     mov     rax,[rsi]
-    mov     [bufferEntradaValidar],rax
+    mov     [caracterAValidar],rax
     
     mov     al,[caracterGuardarPartida]
-    cmp     al,[bufferEntradaValidar]
+    cmp     al,[caracterAValidar]
     je      IngresaGuardarPartida
 
     mov     al,[caracterSalirDelJuego]
-    cmp     al,[bufferEntradaValidar]
+    cmp     al,[caracterAValidar]
     je      IngresaSalirDelJuego
 
-    mov     al,[bufferEntradaValidar]
+    mov     al,[caracterAValidar]
     sub     al,48                       ; convierto el nro ascii ingresado (nro del 1 al 9) en un int
     mov     [movimientoIngresado],al
 
 loopValidarMovimientoIngresado:
-
     mov     rax,0
     mov     rdi,[dirVectMovimientos]    ; verifico si llegue al final del vector de movimientos
     mov     al,[rdi]
@@ -190,4 +198,72 @@ IngresaMovimientoValido:
 
 IngresoInvalido:
     mov     rax,-1
+    ret
+
+ValidarMovimientoOca:
+    ; valida que la entrada del usuario sea un movimiento posible para la oca. si es valido, devuelve el nro de mov en el al. si no es valido devuelve -1 en el al
+    mov     al,[rdi]
+    sub     al,48
+    mov     [movimientoIngresado],al
+    mov     [dirVectMovimientos],rsi
+    jmp     loopValidarMovimientoIngresado
+
+    
+ValidarPosicionOca:
+    ; recibe el tablero en rdx. verifica que en la (fila,col) ingresadas en los registros (dil,sil) haya una oca. si no hay una oca, devuelve -1 en el al.
+    mov     rax,0                 ; rax = fila
+    mov     al,dil
+    mov     rcx,0                 ; rcx = columna
+    mov     cl,sil 
+
+    imul    rax,[longitudFila]
+    imul    rcx,[longitudElemento]
+    add     rax,rcx
+    add     rdx,rax
+
+    mov     al,[repOcas]
+    cmp     al,[rdx]
+    jne     IngresoInvalido
+   
+    ret
+
+ValidarFilaColumna:
+    ; verifica que la entrada sea un número del 1 al 7 inclusive, y lo devuelve en el al. sino devuelve -1 en el al.
+    mov     rax,0
+    mov     al,[rdi]
+
+    sub     al,48
+    cmp     al,1
+    jl      IngresoInvalido
+    cmp     al,7
+    jg      IngresoInvalido
+
+    dec     al
+    
+    ret
+
+
+ValidarEntradaElegirOca:
+    ; verifica que la entrada sea G, S o O y lo devuelve en el al. sino devuelve -1 en el al.
+    ; mov rdi,inputBuffer [ char* ]
+    mov     al,[rdi]
+    mov     [caracterAValidar],al
+
+    mov     al,[caracterGuardarPartida]
+    cmp     al,[caracterAValidar]
+    je      IngresaGuardarPartida
+
+    mov     al,[caracterSalirDelJuego]
+    cmp     al,[caracterAValidar]
+    je      IngresaSalirDelJuego
+
+    mov     al,[caracterElegirOca]
+    cmp     al,[caracterAValidar]
+    je      IngresaElegirOca
+
+    jmp     IngresoInvalido
+
+IngresaElegirOca:
+    mov     rax,0
+    mov     al,[caracterElegirOca]
     ret

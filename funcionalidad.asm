@@ -20,6 +20,9 @@ global ContarOcas
 global CalcularMovimientosZorro
 global RealizarMovimientoZorro
 global FiltrarMovimientosQueNoComenOcas
+global RealizarMovimientoOca
+global CalcularMovimientosOca
+global LimpiarMovimientosPosibles
 
 extern printf
 
@@ -620,4 +623,32 @@ finalizarBusquedaSinMovimiento:
     Mprintf ANSIResetColor
 finalizarBusqueda:
     mov     qword[iterador],0
+    ret
+
+LimpiarMovimientosPosibles:
+    mov     byte[rdi],-1
+    inc     rdi
+
+    mov     rcx,31
+loopLimpiarMovimientosPosibles:
+    mov     byte[rdi],0
+    inc     rdi
+    loop    loopLimpiarMovimientosPosibles
+    ret
+
+RealizarMovimientoOca:
+    ret
+
+CalcularMovimientosOca:
+; calcula los movimientos de la oca en la pos (dil,sil) y los carga en el vector movimientosPosibles. Si no hay ningun movimiento posible, devuelve -1 en el rax.
+    mov    [dirTablero],rdx
+    add    rdx,62
+    mov    [dirVectMovimientos],rdx
+    mov    byte[dirVectMovimientos],8
+    mov    byte[dirVectMovimientos+1], 4
+    mov    byte[dirVectMovimientos+2], 4
+    mov    byte[dirVectMovimientos+3], 0 ; da igual
+    mov    byte[dirVectMovimientos+4], -1
+
+    mov    rax,0
     ret

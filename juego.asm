@@ -44,7 +44,6 @@ extern ValidarPersonalizacion
 extern ValidarOrientacion
 extern CopiarTablero
 extern MostrarTablero
-extern VerificarMovimientoOcas
 extern VerificarMovimientoZorro
 extern ContarOcas
 extern CalcularMovimientosZorro
@@ -53,11 +52,20 @@ extern ValidarEntradaTurnoZorro
 extern RealizarMovimientoZorro
 extern copiarTablero
 
+extern RealizarMovimientoOca    ; mueve la oca en el tablero según el movimiento ingresado en el sil.
+extern CalcularMovimientosOca   ; calcula los movimientos de la oca en la pos (dil,sil) y los carga en el vector movimientosPosibles. Si no hay ningun movimiento posible, devuelve -1 en el rax.
+extern VerificarMovimientoOcas  ; verifica si hay movimientos posibles para las ocas en el tablero. si no hay movimientos posibles, devuelve 0 en el rax. si hay movimientos posibles, devuelve 1 en el rax.
+extern LimpiarMovimientosPosibles
+extern ValidarMovimientoOca
+extern ValidarPosicionOca
+extern ValidarFilaColumna
+extern ValidarEntradaElegirOca
+
 section .data
     mensajeMainMenu             db "        ** MENÚ PRINCIPAL **",10,10,"Bienvenido al juego del Zorro y las Ocas!",10,"Seleccione una opción para jugar (ingresar número de opción)",10,"  0 - Cargar Partida",10,"  1 - Nueva Partida",10,0
     mensajeOpcionInvalida       db "Opción ingresada inválida. Debes ingresar un número de opción.",10,0
     mensajeIngresoInvalido      db "El caracter ingresado no representa una acción posible a realizar. Por favor, guíese con los controles mostrados debajo del tablero.",10,0
-    mostrarControlesZorro       db "CONTROLES:",10," Ingresar uno de los caracteres indicados entre paréntesis. Los movimientos disponibles en este turno estan mostrados en el tablero con el número correspondiente.",10,"(1 - 9) Movimiento - (G) Guardar Partida - (S) Salir del Juego",10,0
+    mostrarControlesZorro       db "CONTROLES:",10," Ingresar uno de los caracteres indicados entre paréntesis. Los movimientos disponibles en este turno estan mostrados en el tablero con el número correspondiente.",10,"(G) Guardar Partida - (S) Salir del Juego - (1 - 9) Movimiento",10,0
     nombreArchivoGuardado       db "partidaGuardada.dat",0
     modoLecturaBinario          db "rb",0
     modoEscrituraBinario        db "wb",0
@@ -75,6 +83,16 @@ section .data
     mensajeEmpate               db "El juego ha terminado en empate.",10,0
     mensajeGanoZorro            db "El Zorro ha ganado la partida.",10,0
     mensajeGanaronOcas          db "Las Ocas han ganado la partida.",10,0
+    controlesOcasElegirOca      db "CONTROLES:",10," Ingresar uno de los caracteres indicados entre paréntesis. Primero, elija una oca para mover.",10,"(G) Guardar Partida - (S) Salir del Juego - (O) Elegir Oca",10,0
+    ocasEntradaInvalidaIngresoInicial   db "La entrada ingresada no es válida. Por favor, ingrese una de las opciones indicadas.",10,0
+    msjOcasElegirFila           db "Ingrese la fila de la oca que desea mover. (Número del 1 al 7): ",0
+    msjOcasElegirCol            db "Ingrese la columna de la oca que desea mover. (Número del 1 al 7): ",0
+    msjOcaMovimientoInvalido    db "El movimiento ingresado no es válido. Por favor, ingrese uno de los movimientos posibles mostrados en el tablero.",10,0
+    msjOcaNoTieneMovimientosPosibles   db  "La oca seleccionada no tiene movimientos posibles. Por favor, elija otra oca.",10,0
+    msjOcaPedirMovimiento       db "Ingrese el número del movimiento que desea realizar, los movimientos disponibles en este turno estan mostrados en el tablero con el número correspondiente.",10,0
+    msjNoHayUnaOcaEnLaPos       db "No hay una oca en la posición ingresada. Por favor, elija una posición válida.",10,0
+    msjColInvalida              db "La columna ingresada no es válida. Por favor, ingrese un número del 1 al 7.",10,0
+    msjFilaInvalida             db "La fila ingresada no es válida. Por favor, ingrese un número del 1 al 7.",10,0
     orientacionDefault          db "N"
     simboloOcasDefault          db "O"
     simboloZorroDefault         db "X"
@@ -137,6 +155,8 @@ section .bss
     inputBuffer             resb 100
     idArchivoGuardado       resq 1
     qwordTemporal           resq 1
+    filaOca                 resb 1
+    colOca                  resb 1
 
 section .text
 
@@ -218,8 +238,12 @@ nuevaPartida:
     mov             al,0
     mov             [ocasComidas],al
     mov             al,-1
-    mov             [movimientosPosibles],al
     mov             [finMovimientosPosibles],al
+
+    mov             rdi,movimientosPosibles
+    sub             rsp,8
+    call            LimpiarMovimientosPosibles
+    add             rsp,8 
 
 personalizacionMostrar:
     MLimpiarPantalla
@@ -360,6 +384,133 @@ comenzarTurnoActual:
     je      turnoExtraZorro
 
 turnoOcas:
+    MLimpiarPantalla
+
+    mov     rdi,movimientosPosibles
+    sub     rsp,8
+    call    LimpiarMovimientosPosibles
+    add     rsp,8 
+    mov     rdi,tablero
+    sub     rsp,8
+    call    MostrarTablero
+    add     rsp,8 
+
+    Mprintf controlesOcasElegirOca ;
+
+ocasIngresarJugadaInicial:
+    Mgets   inputBuffer
+    mov     rdi,inputBuffer
+    sub     rsp,8
+    call    ValidarEntradaElegirOca 
+    add     rsp,8
+
+    cmp     al,-1
+    je      ocasIngresoInvalidoInicial
+
+    cmp     al,[caracterGuardarPartida]
+    je      guardarPartida
+
+    cmp     al,[caracterSalirDelJuego]
+    je      salirDelJuego
+    
+    jmp     ocasElegirOca
+
+ocasIngresoInvalidoInicial:
+    Mprintf ocasEntradaInvalidaIngresoInicial ;
+    jmp     ocasIngresarJugadaInicial
+
+ocasElegirOca:
+    Mprintf msjOcasElegirFila ;
+ocasElegirFila:
+    Mgets   inputBuffer
+    
+    mov     rdi,inputBuffer
+    sub     rsp,8
+    call    ValidarFilaColumna 
+    add     rsp,8
+    cmp     al,-1
+    je      ocasFilaInvalida
+    mov     [filaOca],al
+
+    Mprintf msjOcasElegirCol ;
+ocasElegirCol:
+    Mgets   inputBuffer
+    mov     rdi,inputBuffer
+    sub     rsp,8
+    call    ValidarFilaColumna 
+    add     rsp,8
+    cmp     al,-1
+    je      ocasColInvalida
+    mov     [colOca],al
+
+    mov     dil,[filaOca]
+    mov     sil,[colOca]
+    mov     rdx,tablero
+    sub     rsp,8
+    call    ValidarPosicionOca 
+    add     rsp,8
+
+    cmp     al,-1
+    je      ocasPosicionInvalida
+    jmp     ocaCalcularMovimiento
+
+ocasFilaInvalida:
+    Mprintf msjFilaInvalida ;
+    jmp     ocasElegirFila
+
+ocasColInvalida:
+    Mprintf msjColInvalida ;
+    jmp     ocasElegirCol
+
+ocasPosicionInvalida:
+    Mprintf msjNoHayUnaOcaEnLaPos ;
+    jmp     ocasElegirOca
+
+ocaCalcularMovimiento:    
+    mov     dil,[filaOca]
+    mov     sil,[colOca]
+    mov     rdx,tablero
+    sub     rsp,8
+    call    CalcularMovimientosOca 
+    add     rsp,8
+    cmp     rax,-1
+    je      ocaNoTieneMovimientosPosibles
+
+    MLimpiarPantalla
+    mov     rdi,tablero
+    sub     rsp,8
+    call    MostrarTablero
+    add     rsp,8 
+    
+ocaPedirMovimiento:
+    Mprintf msjOcaPedirMovimiento
+ocaElegirMovimiento:
+    Mgets   inputBuffer
+    mov     rdi,inputBuffer
+    mov     rsi,movimientosPosibles
+    sub     rsp,8
+    call    ValidarMovimientoOca 
+    add     rsp,8
+    cmp     al,-1
+    je      ocaMovimientoInvalido
+    
+    mov     rdi,tablero
+    mov     sil,al
+    sub     rsp,8
+    call    RealizarMovimientoOca 
+    add     rsp,8
+    
+    mov     byte[turnoActual],1
+    jmp     verificarFinDeLaPartida
+
+    
+ocaNoTieneMovimientosPosibles:
+    Mprintf msjOcaNoTieneMovimientosPosibles ;
+    jmp     ocasElegirOca
+
+ocaMovimientoInvalido:
+    Mprintf msjOcaMovimientoInvalido ;
+    jmp     ocaElegirMovimiento
 
 turnoZorro:
     MLimpiarPantalla
@@ -402,7 +553,7 @@ zorroIngresarJugada:
     je      establecerTurnoDeOcas
 
 establecerTurnoExtraZorro:
-    mov     al,2    
+    mov     al,2
     jmp     finTurnoZorro    
 
 establecerTurnoDeOcas:
@@ -447,7 +598,7 @@ verificarFinDeLaPartida:
     call    VerificarMovimientoOcas    ;Falta implementar: (guarda en rax 0 si no hay movimientos disponibles, 1 si hay movimientos disponibles)
     add     rsp,8
     cmp     rax,0
-    je     mostrarEmpate
+    je      mostrarEmpate
 
 verificarVictoriaOcas:
     ; Si el Zorro no tiene movimientos disponibles, ganaron las Ocas
