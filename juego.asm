@@ -51,6 +51,7 @@ extern FiltrarMovimientosQueNoComenOcas
 extern ValidarEntradaTurnoZorro
 extern RealizarMovimientoZorro
 extern copiarTablero
+extern MostrarVectorMovimientos
 
 extern RealizarMovimientoOca    ; mueve la oca en el tablero según el movimiento ingresado en el sil.
 extern CalcularMovimientosOca   ; calcula los movimientos de la oca en la pos (dil,sil) y los carga en el vector movimientosPosibles. Si no hay ningun movimiento posible, devuelve -1 en el rax.
@@ -60,6 +61,7 @@ extern ValidarMovimientoOca
 extern ValidarPosicionOca
 extern ValidarFilaColumna
 extern ValidarEntradaElegirOca
+extern ValidarPodriaMoverseOca  ; recibe el tablero en rdx. verifica que en la (fila,col) ingresadas en los registros (dil,sil) pueda moverse una oca, sino devuelve -1 en al
 
 section .data
     mensajeMainMenu             db "        ** MENÚ PRINCIPAL **",10,10,"Bienvenido al juego del Zorro y las Ocas!",10,"Seleccione una opción para jugar (ingresar número de opción)",10,"  0 - Cargar Partida",10,"  1 - Nueva Partida",10,0
@@ -473,7 +475,7 @@ ocaCalcularMovimiento:
     sub     rsp,8
     call    CalcularMovimientosOca 
     add     rsp,8
-    cmp     rax,-1
+    cmp     al,-1
     je      ocaNoTieneMovimientosPosibles
 
     MLimpiarPantalla
@@ -491,7 +493,7 @@ ocaElegirMovimiento:
     sub     rsp,8
     call    ValidarMovimientoOca 
     add     rsp,8
-    cmp     al,-1
+    cmp     rax,-1
     je      ocaMovimientoInvalido
     
     mov     rdi,tablero
@@ -638,6 +640,7 @@ mostrarVictoriaOcas:
 mostrarEstadisticasFin:
 ;Falta implementar
 ; Mostrar estadísticas de fin y finalizar el juego
+    jmp     comenzarTurnoActual
 
 guardarPartida:
     ; Abro el archivo de guardado

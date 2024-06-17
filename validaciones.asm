@@ -6,6 +6,7 @@ global ValidarMovimientoOca
 global ValidarPosicionOca
 global ValidarFilaColumna
 global ValidarEntradaElegirOca
+global ValidarPodriaMoverseOca
 
 section .data
     menuOpcionCargarPartida             db "0",0
@@ -26,6 +27,7 @@ section .data
     caracterElegirOca                   db "O"
 
     repOcas                             db 1
+    repEspacio                          db 0
     longitudElemento                    dq 1
     longitudFila                        dq 7
 
@@ -226,6 +228,7 @@ ValidarPosicionOca:
     jne     IngresoInvalido
    
     ret
+    
 
 ValidarFilaColumna:
     ; verifica que la entrada sea un número del 1 al 7 inclusive, y lo devuelve en el al. sino devuelve -1 en el al.
