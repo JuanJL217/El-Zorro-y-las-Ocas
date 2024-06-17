@@ -649,9 +649,6 @@ CalcularMovimientosOca:
     mov     [dirTablero],rdx
     add     rdx,62
     mov     [dirVectMovimientos],rdx
-    ; mov     rdx,[dirTablero]
-    ; add     rdx,49
-    ; mov     orientacion,rdx
     mov     qword[iterador],2
     mov     rdx,[dirTablero]
 
