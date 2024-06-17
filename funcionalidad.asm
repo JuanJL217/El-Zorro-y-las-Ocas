@@ -639,6 +639,49 @@ loopLimpiarMovimientosPosibles:
     ret
 
 RealizarMovimientoOca:
+    mov     [dirTablero],rdx
+    add     rdx,62
+    mov     [dirVectMovimientos],rdx
+    mov     [movActual],cl
+    ; dil = [filaOca]
+    ; sil = [colOca]
+    mov     rax,[dirVectMovimientos]
+ocaBuscarMovEnMovPosibles:
+
+    mov     bl,byte[rax]    ; bl = nro de mov posible
+    cmp     bl,-1
+    je      movNoPosible    ; (No debería pasar nunca)
+    cmp     bl,[movActual]
+    je      ocaMovEncontrado
+
+    add     rax,4           ; siguiente movimientoPosible
+    jmp     ocaBuscarMovEnMovPosibles
+
+ocaMovEncontrado:
+    mov     r8,0
+    mov     r8b,[rax+1]          ;nuevaFila guardada como byte
+    imul    r8,[longitudFila]
+    mov     r9,0
+    mov     r9b,[rax+2]          ;nuevaCol guardada como byte
+    imul    r9,[longitudElemento]
+    add     r8,r9
+    add     r8,[dirTablero]
+
+    mov     al,byte[repOcas]
+    mov     byte[r8],al ; dejo una oca en la nueva pos
+
+    ; saco la oca de su posición anterior.
+    mov     r8,0
+    mov     r8b,dil ;anteriorFila guardada como qword
+    imul    r8,[longitudFila]
+    mov     r9,0
+    mov     r9b,sil ;anteriorColumna guardada como qword
+    imul    r9,[longitudElemento]
+    add     r8,r9
+    add     r8,[dirTablero]
+
+    mov     al,byte[repEspacio]
+    mov     byte[r8],al ; dejo un espacio en la anterior pos
     ret
 
 CalcularMovimientosOca:
