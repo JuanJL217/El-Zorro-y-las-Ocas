@@ -110,8 +110,8 @@ section .data
     tableroNorte                db -1,-1, 1, 1, 1,-1,-1
     tableroNorte1               db -1,-1, 1, 1, 1,-1,-1
     tableroNorte2               db  1, 1, 1, 1, 1, 1, 1
-    tableroNorte3               db  1, 0, 0, 0, 0, 0, 1
-    tableroNorte4               db  1, 0, 0, 2, 0, 0, 1
+    tableroNorte3               db  1, 0, 0, 0, 0, 2, 1
+    tableroNorte4               db  1, 0, 0, 0, 1, 1, 0
     tableroNorte5               db -1,-1, 0, 0, 0,-1,-1
     tableroNorte6               db -1,-1, 0, 0, 0,-1,-1
                                     
@@ -519,6 +519,11 @@ ocaMovimientoInvalido:
 
 turnoZorro:
     MLimpiarPantalla
+    mov     rdi,movimientosPosibles
+    sub     rsp,8
+    call    LimpiarMovimientosPosibles
+    add     rsp,8 
+
     mov     rdi,tablero
     sub     rsp,8
     call    CalcularMovimientosZorro
@@ -641,9 +646,9 @@ mostrarVictoriaOcas:
     jmp     mostrarEstadisticasFin
 
 mostrarEstadisticasFin:
-;Falta implementar
-; Mostrar estadísticas de fin y finalizar el juego
-    jmp     comenzarTurnoActual
+    ; Falta implementar
+    ; Mostrar estadísticas de fin y finalizar el juego
+    ret
 
 guardarPartida:
     ; Abro el archivo de guardado

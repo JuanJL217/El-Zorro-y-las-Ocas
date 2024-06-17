@@ -260,17 +260,22 @@ VerificarMovimientoOcas:
 ; recibe en rdi la dirección del tablero
 ; guarda en rax 0 si no hay movimientos disponibles, 1 si hay movimientos disponibles
 VerificarMovimientoZorro:
-    mov     [dirTablero],rdi     
+    mov     [dirTablero],rdi
     
+    add     rdi,62
+    sub     rsp,8
+    call    LimpiarMovimientosPosibles
+    add     rsp,8 
+    
+    mov     rdi,[dirTablero]
     sub     rsp,8
     call    CalcularMovimientosZorro
     add     rsp,8
 
     mov     rdi,[dirTablero]
     add     rdi,62              
-    mov     [dirVectMovimientos],rdi
 
-    mov     al,byte[dirVectMovimientos]
+    mov     al,byte[rdi]
     cmp     al,-1
     je      zorroNoTieneMovimientosDisponibles
     mov     rax,1
@@ -293,7 +298,9 @@ CalcularMovimientosZorro:
     add     rdi,62              
     ; rdi = movimientosPosibles
     mov     [dirVectMovimientos],rdi
-
+    mov     rbx,[dirVectMovimientos]
+    mov     byte[rbx],-1
+    
     mov     qword[iteradorFila],-1
     mov     qword[iteradorCol],-1
     mov     byte[movActual],1
