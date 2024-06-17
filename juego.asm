@@ -111,7 +111,7 @@ section .data
     tableroNorte1               db -1,-1, 1, 1, 1,-1,-1
     tableroNorte2               db  1, 1, 1, 1, 1, 1, 1
     tableroNorte3               db  1, 0, 0, 0, 0, 0, 1
-    tableroNorte4               db  1, 0, 0, 2, 0, 0, 1
+    tableroNorte4               db  1, 0, 1, 2, 1, 0, 1
     tableroNorte5               db -1,-1, 0, 0, 0,-1,-1
     tableroNorte6               db -1,-1, 0, 0, 0,-1,-1
                                     
@@ -496,10 +496,12 @@ ocaElegirMovimiento:
     cmp     rax,-1
     je      ocaMovimientoInvalido
     
-    mov     rdi,tablero
-    mov     sil,al
+    mov     dil,[filaOca]
+    mov     sil,[colOca]
+    mov     rdx,tablero
+    mov     cl,al
     sub     rsp,8
-    call    RealizarMovimientoOca 
+    call    RealizarMovimientoOca
     add     rsp,8
     
     mov     byte[turnoActual],1
