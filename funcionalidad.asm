@@ -34,6 +34,10 @@ section .data
     repEspacio              db 0
     simboloEspacio          db " "
     simboloInaccesible      db "#"
+    caracterNorte           db 'N'
+    caracterOeste           db 'O'
+    caracterEste            db 'E'
+    caracterSur             db 'S'
 
     longitudFila            dq 7
     longitudElemento        dq 1
@@ -61,6 +65,7 @@ section .bss
     iteradorCol             resq 1
     dirTablero              resq 1
     dirVectMovimientos      resq 1
+    dirVectEstadisticas     resq 1
     simboloZorro            resb 1
     simboloOcas             resb 1
     filaZorro               resq 1
@@ -438,27 +443,23 @@ RealizarMovimientoZorro:
     add     rsp,8
     mov     [filaZorro],rax
     mov     [colZorro],rbx
-
-    add     rdi,62              
+    add     rdi,54
+    mov     [dirVectEstadisticas],rdi
+    add     rdi,8             
     mov     [dirVectMovimientos],rdi
+    mov     [movActual],sil
 
-    mov     qword[iterador],0
+    mov     rax,[dirVectMovimientos]
+zorroBuscarMovEnMovPosibles:
 
-buscarMovEnMovPosibles:
-    cmp     qword[iterador],7
-    je      movNoPosible    ; (No debería pasar nunca)
-
-    mov     rax,[iterador]
-    imul    rax,4           ; long. de elemento de vectorMovimientos
-    add     rax,[dirVectMovimientos]
     mov     bl,byte[rax]    ; bl = nro de mov posible
     cmp     bl,-1
     je      movNoPosible    ; (No debería pasar nunca)
     cmp     bl,sil
     je      movEncontrado
 
-    inc     qword[iterador]
-    jmp     buscarMovEnMovPosibles
+    add     rax,4           ; siguiente movimientoPosible
+    jmp     zorroBuscarMovEnMovPosibles
 
 movNoPosible:
     ret
@@ -466,6 +467,17 @@ movNoPosible:
 movEncontrado:
     ; guardo la posición del movimiento actual
     mov     [dirVectMovimientos],rax
+
+agregarEstadistica:
+    cmp     byte[movActual],5
+    jl      restarUno
+    dec     byte[movActual]
+restarUno:
+    dec     byte[movActual]
+    mov     rax,0
+    mov     al,byte[movActual]
+    add     rax,[dirVectEstadisticas]
+    inc     byte[rax]
 
     ; saco el zorro de su posición anterior.
     mov     r8,[filaZorro] ;fila guardada como qword
@@ -748,13 +760,13 @@ SiEsValidoMovAlmacenar:
 
     mov     r9,0
     mov     r9b,[orientacion]   
-    cmp     r9b,78
+    cmp     r9b,[caracterNorte]
     je      NorteNoValido
-    cmp     r9b,79
+    cmp     r9b,[caracterOeste]
     je      OesteNoValido
-    cmp     r9b,69
+    cmp     r9b,[caracterEste]
     je      EsteNoValido
-    cmp     r9b,84
+    cmp     r9b,[caracterSur]
     je      SurNoValido
 EsValidaOrientacion:
 

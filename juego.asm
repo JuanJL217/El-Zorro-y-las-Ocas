@@ -111,7 +111,7 @@ section .data
     tableroNorte1               db -1,-1, 1, 1, 1,-1,-1
     tableroNorte2               db  1, 1, 1, 1, 1, 1, 1
     tableroNorte3               db  1, 0, 0, 0, 0, 0, 1
-    tableroNorte4               db  1, 0, 1, 2, 1, 0, 1
+    tableroNorte4               db  1, 0, 0, 2, 0, 0, 1
     tableroNorte5               db -1,-1, 0, 0, 0,-1,-1
     tableroNorte6               db -1,-1, 0, 0, 0,-1,-1
                                     
@@ -150,7 +150,7 @@ section .bss
     turnoActual             resb 1 ; es un número (0 Ocas ; 1 Zorro ; 2 Movimiento Extra del Zorro)
     ocasComidas             resb 1 ; es un número (0, 1, 2, ...)
     estadisticasZorro       times 8 resb 1 ; vector de 8 posiciones - una por cada dirección del zorro
-    movimientosPosibles     times 8 resb 4 ; vector de 8 elementos, cada uno con 4 valores - una por cada dirección posible ; el final de este vector DEBE SER INDICADO con un -1
+    movimientosPosibles     times 8 resb 4 ; vector de 8 elementos (una por cada dirección posible), cada uno con 4 valores (nroMov, fila, col, comeOca?) ; el final de este vector DEBE SER INDICADO con un -1
     ; ¡IMPORTANTE! -> el vector movimientosPosibles es de tamaño variable! Siempre recorrerlo hasta encontrar el -1 (lo que sigue al -1 es basura)                                           
     finMovimientosPosibles  resb 1
 
@@ -241,6 +241,7 @@ nuevaPartida:
     mov             [ocasComidas],al
     mov             al,-1
     mov             [finMovimientosPosibles],al
+    mov             qword[estadisticasZorro],0 ;inicializo los 8bytes con 0
 
     mov             rdi,movimientosPosibles
     sub             rsp,8
