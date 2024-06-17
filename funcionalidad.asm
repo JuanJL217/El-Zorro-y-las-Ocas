@@ -650,6 +650,11 @@ CalcularMovimientosOca:
     mov     [dirVectMovimientos],rdx
     mov     qword[iterador],2
     mov     rdx,[dirTablero]
+    add     rdx,49
+
+    mov     al,[rdx]
+    mov     [orientacion],al
+
 
     ;Recorro las cuatro posiciones cardinales de la oca para ver si incluir o no ese movimiento
     dec     dil
@@ -698,6 +703,18 @@ SiEsValidoMovAlmacenar:
     cmp     cl,6
     jg      IngresoInvalido
 
+    mov     r9,0
+    mov     r9b,[orientacion]   
+    cmp     r9b,78
+    je      NorteNoValido
+    cmp     r9b,79
+    je      OesteNoValido
+    cmp     r9b,69
+    je      EsteNoValido
+    cmp     r9b,84
+    je      SurNoValido
+EsValidaOrientacion:
+
     imul    rax,[longitudFila]
     imul    rcx,[longitudElemento]
     add     rax,rcx
@@ -724,3 +741,24 @@ AlmacenarMovOca:
 IngresoInvalido:
     add     qword[iterador],2
     ret
+
+NorteNoValido:
+    cmp     qword[iterador],2
+    je      IngresoInvalido
+    jmp     EsValidaOrientacion
+
+OesteNoValido:
+    cmp     qword[iterador],4
+    je      IngresoInvalido
+    jmp     EsValidaOrientacion
+
+EsteNoValido:
+    cmp     qword[iterador],6
+    je      IngresoInvalido
+    jmp     EsValidaOrientacion
+
+SurNoValido:
+    cmp     qword[iterador],8
+    je      IngresoInvalido
+    jmp     EsValidaOrientacion
+
