@@ -110,8 +110,8 @@ section .data
     tableroNorte                db -1,-1, 1, 1, 1,-1,-1
     tableroNorte1               db -1,-1, 1, 1, 1,-1,-1
     tableroNorte2               db  1, 1, 1, 1, 1, 1, 1
-    tableroNorte3               db  1, 0, 0, 0, 0, 2, 1
-    tableroNorte4               db  1, 0, 0, 0, 1, 1, 0
+    tableroNorte3               db  1, 0, 0, 0, 0, 0, 1
+    tableroNorte4               db  1, 0, 0, 2, 0, 0, 1
     tableroNorte5               db -1,-1, 0, 0, 0,-1,-1
     tableroNorte6               db -1,-1, 0, 0, 0,-1,-1
                                     
