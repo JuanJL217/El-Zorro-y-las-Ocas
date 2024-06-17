@@ -475,7 +475,7 @@ ocaCalcularMovimiento:
     sub     rsp,8
     call    CalcularMovimientosOca 
     add     rsp,8
-    cmp     rax,-1
+    cmp     al,-1
     je      ocaNoTieneMovimientosPosibles
 
     MLimpiarPantalla

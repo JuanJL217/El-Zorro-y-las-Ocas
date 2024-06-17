@@ -150,7 +150,6 @@ MostrarTablero:
                                             ; marco las líneas que se pueden copiar y pegar para hacer
     mov     qword[iteradorFila],0           ; la estructura de un loop que itera sobre todo el tablero
     mov     qword[iteradorCol],0            ;
-    mov     qword[iterador],0               ;Este el el iterador para el vector de mov posibles
    
     Mprintf ANSIColorMarco
     mov     r8,[iteradorFila]
@@ -589,13 +588,12 @@ finFiltrarMovimientos:
 buscarFilColEnMovPosibles:
     Mprintf ANSIColorMostrarMovimiento
     Mprintf ANSIItalicOn
+    mov     qword[iterador],0
     mov     rax,-1 ;por default no se encuentra nada
     mov     rbx,0  ;limpio los registros por las dudas
     mov     rcx,0 
 
 buscarFilColEnMovPosiblesLoop:
-    cmp     qword[iterador],8          ;como mucho se va a iterar un total de 9 veces (caso de maximo movimientos posibles)
-    je      finalizarBusquedaSinMovimiento
 
     mov     rcx,[iterador]
     imul    rcx,4 
@@ -644,7 +642,8 @@ RealizarMovimientoOca:
     ret
 
 CalcularMovimientosOca:
-; calcula los movimientos de la oca en la pos (dil,sil) y los carga en el vector movimientosPosibles. Si no hay ningun movimiento posible, devuelve -1 en el rax.
+    ; precondicion: el vectorMovimientos debe estar previamente limpio (todos ceros, excepto el primer byte que debe ser -1)
+    ; calcula los movimientos de la oca en la pos (dil,sil) y los carga en el vector movimientosPosibles. Si no hay ningun movimiento posible, devuelve -1 en el al.
     ; Set inicial de dirTablero, dirVectMovimientos, orientacion, iterador
     mov     [dirTablero],rdx
     add     rdx,62
@@ -679,12 +678,12 @@ CalcularMovimientosOca:
 
     mov     rax,0 ; Hacer que devuelva -1 en el rax si no tiene mov disponibles
     mov     r8,[dirVectMovimientos]
-    mov     rax,[r8]
+    mov     al,[r8]
     mov     byte[r8],-1
     ret
 
 SiEsValidoMovAlmacenar: 
-    ; mov     rdx,[dirTablero]
+    mov     rdx,[dirTablero]
     mov     rax,0                 ; rax = fila
     mov     al,dil
     mov     rcx,0                 ; rcx = columna
@@ -711,11 +710,12 @@ SiEsValidoMovAlmacenar:
 AlmacenarMovOca:
     mov     rbx,0 ;
     mov     rbx,qword[iterador]
-    mov     rdi,[dirVectMovimientos]
-    mov     byte[rdi],bl
-    mov     byte[rdi+1],dil
-    mov     byte[rdi+2],sil
-    mov     byte[rdi+3],0
+    mov     r10,[dirVectMovimientos]
+
+    mov     byte[r10],bl
+    mov     byte[r10+1],dil
+    mov     byte[r10+2],sil
+    mov     byte[r10+3],0
 
     add     qword[iterador],2
     add     qword[dirVectMovimientos],4
