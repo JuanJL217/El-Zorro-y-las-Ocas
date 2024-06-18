@@ -68,6 +68,8 @@ section .data
     mensajeOpcionInvalida       db "Opción ingresada inválida. Debes ingresar un número de opción.",10,0
     mensajeIngresoInvalido      db "El caracter ingresado no representa una acción posible a realizar. Por favor, guíese con los controles mostrados debajo del tablero.",10,0
     mostrarControlesZorro       db "CONTROLES:",10," Ingresar uno de los caracteres indicados entre paréntesis. Los movimientos disponibles en este turno estan mostrados en el tablero con el número correspondiente.",10,"(G) Guardar Partida - (S) Salir del Juego - (1 - 9) Movimiento",10,0
+    mensajeTurnoOcas            db "  ** TURNO DE LAS OCAS **",10,0
+    mensajeTurnoZorro           db "   ** TURNO DEL ZORRO **",10,0
     nombreArchivoGuardado       db "partidaGuardada.dat",0
     modoLecturaBinario          db "rb",0
     modoEscrituraBinario        db "wb",0
@@ -82,9 +84,10 @@ section .data
     mensajeSeleccionInvalida    db "Ingrese una de las opciones ennumeradas.",10,0
     mensajeIngresarSimboloOcas  db "Ingrese un símbolo para representar las Ocas. No puede ser un espacio ni tampoco el símbolo del zorro.",10,0
     mensajeIngresarSimboloZorro db "Ingrese un símbolo para representar el Zorro. No puede ser un espacio ni tampoco el símbolo de las ocas.",10,0
-    mensajeEmpate               db "El juego ha terminado en empate.",10,0
-    mensajeGanoZorro            db "El Zorro ha ganado la partida.",10,0
-    mensajeGanaronOcas          db "Las Ocas han ganado la partida.",10,0
+                                   "[ ] 1  2  3  4  5  6  7 [ ]"
+    mensajeEmpate               db "- - - - - EMPATE! - - - - -",10,0                                
+    mensajeGanoZorro            db " - - - GANA EL ZORRO! - - -",10,0
+    mensajeGanaronOcas          db "- - - GANAN LAS OCAS! - - -",10,0
     controlesOcasElegirOca      db "CONTROLES:",10," Ingresar uno de los caracteres indicados entre paréntesis. Primero, elija una oca para mover.",10,"(G) Guardar Partida - (S) Salir del Juego - (O) Elegir Oca",10,0
     ocasEntradaInvalidaIngresoInicial   db "La entrada ingresada no es válida. Por favor, ingrese una de las opciones indicadas.",10,0
     msjOcasElegirFila           db "Ingrese la fila de la oca que desea mover. (Número del 1 al 7): ",0
@@ -393,6 +396,7 @@ turnoOcas:
     sub     rsp,8
     call    LimpiarMovimientosPosibles
     add     rsp,8 
+    Mprintf mensajeTurnoOcas
     mov     rdi,tablero
     sub     rsp,8
     call    MostrarTablero
@@ -480,6 +484,7 @@ ocaCalcularMovimiento:
     je      ocaNoTieneMovimientosPosibles
 
     MLimpiarPantalla
+    Mprintf mensajeTurnoOcas
     mov     rdi,tablero
     sub     rsp,8
     call    MostrarTablero
@@ -529,6 +534,7 @@ turnoZorro:
     call    CalcularMovimientosZorro
     add     rsp,8 
 
+    Mprintf mensajeTurnoZorro
     mov     rdi,tablero
     sub     rsp,8
     call    MostrarTablero
@@ -591,7 +597,7 @@ turnoExtraZorro:
 
     cmp     rax,0 ; no hay movimientos para comer más ocas
     je      establecerTurnoDeOcas
-
+    Mprintf mensajeTurnoZorro
     mov     rdi,tablero
     sub     rsp,8
     call    MostrarTablero
@@ -646,8 +652,17 @@ mostrarVictoriaOcas:
     jmp     mostrarEstadisticasFin
 
 mostrarEstadisticasFin:
-    ; Falta implementar
-    ; Mostrar estadísticas de fin y finalizar el juego
+     mov     rdi,movimientosPosibles
+    sub     rsp,8
+    call    LimpiarMovimientosPosibles
+    add     rsp,8 
+    mov     rdi,tablero
+    sub     rsp,8
+    call    MostrarTablero
+    add     rsp,8 
+
+    ; Falta implementar - hay que mostrar las estadísticas de movimiento del zorro.
+
     ret
 
 guardarPartida:
