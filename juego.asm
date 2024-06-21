@@ -83,7 +83,7 @@ section .data
     mensajeSeleccionInvalida    db "Ingrese una de las opciones ennumeradas.",10,0
     mensajeIngresarSimboloOcas  db "Ingrese un símbolo para representar las Ocas. No puede ser un espacio ni tampoco el símbolo del zorro.",10,0
     mensajeIngresarSimboloZorro db "Ingrese un símbolo para representar el Zorro. No puede ser un espacio ni tampoco el símbolo de las ocas.",10,0
-    mensajeEmpate               db "- - - - - EMPATE! - - - - -",10,0                                
+    mensajeEmpate               db "- - - - - EMPATE! - - - - -",10,"Ninguna oca se puede mover.",10,0                               
     mensajeGanoZorro            db " - - - GANA EL ZORRO! - - -",10,0
     mensajeGanaronOcas          db "- - - GANAN LAS OCAS! - - -",10,0
     controlesOcasElegirOca      db "CONTROLES:",10," Ingresar uno de los caracteres indicados entre paréntesis. Primero, elija una oca para mover.",10,"(G) Guardar Partida - (S) Salir del Juego - (O) Elegir Oca",10,0
@@ -108,13 +108,13 @@ section .data
     turnoDelZorro               db 1
     turnoDeLasOcas              db 0
     ; -1 espacios inaccesibles | 0 espacio | 1 oca | 2 zorro 
-    tableroNorte                db -1,-1, 0, 0, 0,-1,-1
-    tableroNorte1               db -1,-1, 0, 0, 0,-1,-1
-    tableroNorte2               db  0, 0, 0, 1, 0, 0, 0
-    tableroNorte3               db  0, 0, 0, 0, 0, 0, 0
-    tableroNorte4               db  0, 0, 0, 2, 0, 0, 0
+    tableroNorte                db -1,-1, 1, 1, 1,-1,-1
+    tableroNorte1               db -1,-1, 1, 1, 1,-1,-1
+    tableroNorte2               db  1, 1, 1, 1, 1, 1, 1
+    tableroNorte3               db  1, 0, 0, 0, 0, 0, 1
+    tableroNorte4               db  1, 0, 0, 2, 0, 0, 1
     tableroNorte5               db -1,-1, 0, 0, 0,-1,-1
-    tableroNorte6               db -1,-1, -1, 0, -1,-1,-1
+    tableroNorte6               db -1,-1, 0, 0, 0,-1,-1
                                     
     tableroSur                  db -1,-1, 0, 0, 0,-1,-1
     tableroSur1                 db -1,-1, 0, 0, 0,-1,-1
