@@ -14,7 +14,7 @@
 
 global CopiarTablero
 global MostrarTablero
-global VerificarMovimientoOcas ; verifica si hay movimientos posibles para las ocas en el tablero. si no hay movimientos posibles, devuelve 0 en el rax. si hay movimientos posibles, devuelve 1 en el rax.
+global VerificarMovimientoOcas ; verifica si hay movimientos posibles para las ocas en el tablero. si no hay movimientos posibles, devuelve -1 en el rax
 global VerificarMovimientoZorro
 global ContarOcas
 global CalcularMovimientosZorro
@@ -26,6 +26,7 @@ global LimpiarMovimientosPosibles
 global SiEsValidoMovAlmacenar
 
 extern printf
+extern ValidarPosicionOca
 
 section .data
     ; como se representan diferentes elementos en el tablero
@@ -253,8 +254,58 @@ esZorro:
     ret
 
 VerificarMovimientoOcas:
-; Falta implementar
-    mov     rax,1
+    mov     [dirTablero],rdi
+    add     rdi,62
+    mov     [dirVectMovimientos],rdi
+    mov     qword[iteradorFila],0
+    mov     qword[iteradorCol],0
+
+LoopVerificarMovimientoOcas:
+    mov     rdi,[dirVectMovimientos]
+    sub     rsp,8
+    call    LimpiarMovimientosPosibles
+    add     rsp,8
+
+    mov     dil,[iteradorFila]
+    mov     sil,[iteradorCol]
+    mov     rdx,[dirTablero]
+
+    sub     rsp,8
+    call    ValidarPosicionOca
+    add     rsp,8
+    cmp     al,-1   ;No es una oca
+    je     AvanzarIteradorOca
+
+    mov     rdx,qword[dirTablero]
+    sub     rsp,8
+    call    CalcularMovimientosOca
+    add     rsp,8
+
+    cmp     al,-1
+    jne     HayOcaConMovimientos
+
+AvanzarIteradorOca:
+    cmp     sil,6   ;Llegó al final de la columna
+    je      AvanzarFilaOca
+
+    inc     qword[iteradorCol]
+    jmp     LoopVerificarMovimientoOcas
+
+
+AvanzarFilaOca:
+    cmp     dil,6   ;LLegó al final de la matriz
+    je      NoHayOcaConMovimientos
+
+    mov     qword[iteradorCol],0
+    inc     qword[iteradorFila]
+    jmp	    LoopVerificarMovimientoOcas
+
+HayOcaConMovimientos:
+    mov     rax,0
+    ret
+
+NoHayOcaConMovimientos:
+    mov     rax,-1
     ret
 
 ; recibe en rdi la dirección del tablero
@@ -713,7 +764,6 @@ CalcularMovimientosOca:
     mov     qword[iterador],2
     mov     rdx,[dirTablero]
     add     rdx,49
-
     mov     al,[rdx]
     mov     [orientacion],al
 

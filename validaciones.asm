@@ -216,7 +216,7 @@ ValidarPosicionOca:
     mov     rax,0                 ; rax = fila
     mov     al,dil
     mov     rcx,0                 ; rcx = columna
-    mov     cl,sil 
+    mov     cl,sil
 
     imul    rax,[longitudFila]
     imul    rcx,[longitudElemento]

@@ -55,13 +55,12 @@ extern MostrarVectorMovimientos
 
 extern RealizarMovimientoOca    ; mueve la oca en el tablero según el movimiento ingresado en el sil.
 extern CalcularMovimientosOca   ; calcula los movimientos de la oca en la pos (dil,sil) y los carga en el vector movimientosPosibles. Si no hay ningun movimiento posible, devuelve -1 en el rax.
-extern VerificarMovimientoOcas  ; verifica si hay movimientos posibles para las ocas en el tablero. si no hay movimientos posibles, devuelve 0 en el rax. si hay movimientos posibles, devuelve 1 en el rax.
+extern VerificarMovimientoOcas  ; verifica si hay movimientos posibles para las ocas en el tablero. si no hay movimientos posibles, devuelve -1 en el rax.
 extern LimpiarMovimientosPosibles
 extern ValidarMovimientoOca
 extern ValidarPosicionOca
 extern ValidarFilaColumna
 extern ValidarEntradaElegirOca
-extern ValidarPodriaMoverseOca  ; recibe el tablero en rdx. verifica que en la (fila,col) ingresadas en los registros (dil,sil) pueda moverse una oca, sino devuelve -1 en al
 
 section .data
     mensajeMainMenu             db "        ** MENÚ PRINCIPAL **",10,10,"Bienvenido al juego del Zorro y las Ocas!",10,"Seleccione una opción para jugar (ingresar número de opción)",10,"  0 - Cargar Partida",10,"  1 - Nueva Partida",10,0
@@ -84,7 +83,6 @@ section .data
     mensajeSeleccionInvalida    db "Ingrese una de las opciones ennumeradas.",10,0
     mensajeIngresarSimboloOcas  db "Ingrese un símbolo para representar las Ocas. No puede ser un espacio ni tampoco el símbolo del zorro.",10,0
     mensajeIngresarSimboloZorro db "Ingrese un símbolo para representar el Zorro. No puede ser un espacio ni tampoco el símbolo de las ocas.",10,0
-                                   "[ ] 1  2  3  4  5  6  7 [ ]"
     mensajeEmpate               db "- - - - - EMPATE! - - - - -",10,0                                
     mensajeGanoZorro            db " - - - GANA EL ZORRO! - - -",10,0
     mensajeGanaronOcas          db "- - - GANAN LAS OCAS! - - -",10,0
@@ -110,13 +108,13 @@ section .data
     turnoDelZorro               db 1
     turnoDeLasOcas              db 0
     ; -1 espacios inaccesibles | 0 espacio | 1 oca | 2 zorro 
-    tableroNorte                db -1,-1, 1, 1, 1,-1,-1
-    tableroNorte1               db -1,-1, 1, 1, 1,-1,-1
-    tableroNorte2               db  1, 1, 1, 1, 1, 1, 1
-    tableroNorte3               db  1, 0, 0, 0, 0, 0, 1
-    tableroNorte4               db  1, 0, 0, 2, 0, 0, 1
+    tableroNorte                db -1,-1, 0, 0, 0,-1,-1
+    tableroNorte1               db -1,-1, 0, 0, 0,-1,-1
+    tableroNorte2               db  0, 0, 0, 1, 0, 0, 0
+    tableroNorte3               db  0, 0, 0, 0, 0, 0, 0
+    tableroNorte4               db  0, 0, 0, 2, 0, 0, 0
     tableroNorte5               db -1,-1, 0, 0, 0,-1,-1
-    tableroNorte6               db -1,-1, 0, 0, 0,-1,-1
+    tableroNorte6               db -1,-1, -1, 0, -1,-1,-1
                                     
     tableroSur                  db -1,-1, 0, 0, 0,-1,-1
     tableroSur1                 db -1,-1, 0, 0, 0,-1,-1
@@ -611,9 +609,9 @@ verificarFinDeLaPartida:
     ; Si ninguna oca tiene movimientos disponibles -> empate
     mov     rdi,tablero
     sub     rsp,8
-    call    VerificarMovimientoOcas    ;Falta implementar: (guarda en rax 0 si no hay movimientos disponibles, 1 si hay movimientos disponibles)
+    call    VerificarMovimientoOcas
     add     rsp,8
-    cmp     rax,0
+    cmp     rax,-1
     je      mostrarEmpate
 
 verificarVictoriaOcas:
@@ -652,7 +650,7 @@ mostrarVictoriaOcas:
     jmp     mostrarEstadisticasFin
 
 mostrarEstadisticasFin:
-     mov     rdi,movimientosPosibles
+    mov     rdi,movimientosPosibles
     sub     rsp,8
     call    LimpiarMovimientosPosibles
     add     rsp,8 
