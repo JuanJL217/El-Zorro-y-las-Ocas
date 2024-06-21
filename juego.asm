@@ -96,6 +96,7 @@ section .data
     msjNoHayUnaOcaEnLaPos       db "No hay una oca en la posición ingresada. Por favor, elija una posición válida.",10,0
     msjColInvalida              db "La columna ingresada no es válida. Por favor, ingrese un número del 1 al 7.",10,0
     msjFilaInvalida             db "La fila ingresada no es válida. Por favor, ingrese un número del 1 al 7.",10,0
+    mensajeEstadisticasZorro    db  "Cantidad de ocas comidas: %li",10, "Cantidad de movimientos realizados: %li",10,0
     orientacionDefault          db "N"
     simboloOcasDefault          db "O"
     simboloZorroDefault         db "X"
@@ -141,7 +142,7 @@ section .data
     tableroOeste6               db -1,-1, 1, 1, 1,-1,-1
 
 section .bss
-    registroDatosPartida    times 0 resb 95 ; Es una etiqueta (apunta a exactamente lo mismo que la etiqueta "tablero")
+    registroDatosPartida    times 0 resb 103 ; Es una etiqueta (apunta a exactamente lo mismo que la etiqueta "tablero")
     ; Variables de partida - en orden específico para poder acceder a todas desde diferentes rutinas
     ; ¡IMPORTANTE! -> TODOS ESTOS DATOS ESTÁN EN UN BYTE CADA UNO, PARA OPERAR CON ELLOS HAY QUE USAR REGISTROS DE 8 BITS (al,bl,cl,dl,ah,bh,ch,dh,...)
     tablero                 times 7 resb 7
@@ -154,6 +155,7 @@ section .bss
     movimientosPosibles     times 8 resb 4 ; vector de 8 elementos (una por cada dirección posible), cada uno con 4 valores (nroMov, fila, col, comeOca?) ; el final de este vector DEBE SER INDICADO con un -1
     ; ¡IMPORTANTE! -> el vector movimientosPosibles es de tamaño variable! Siempre recorrerlo hasta encontrar el -1 (lo que sigue al -1 es basura)                                           
     finMovimientosPosibles  resb 1
+    cantMovZorro            resq 1
 
     inputBuffer             resb 100
     idArchivoGuardado       resq 1
@@ -203,7 +205,7 @@ cargarPartida:
     ; Sino, cargo la partida
     mov             qword[idArchivoGuardado],rax
     mov             rdi,registroDatosPartida
-    mov             rsi,95
+    mov             rsi,103
     mov             rdx,1
     mov             rcx,[idArchivoGuardado]
     sub             rsp,8
@@ -238,8 +240,8 @@ nuevaPartida:
     mov             [simboloZorro],al
     mov             al,[turnoDelZorro]
     mov             [turnoActual],al
-    mov             al,0
-    mov             [ocasComidas],al
+    mov             byte[ocasComidas],0
+    mov             qword[cantMovZorro],0
     mov             al,-1
     mov             [finMovimientosPosibles],al
     mov             qword[estadisticasZorro],0 ;inicializo los 8bytes con 0
@@ -540,6 +542,8 @@ turnoZorro:
 
     Mprintf mostrarControlesZorro
 
+    jmp    mostrarEstadisticasZorro
+
 zorroIngresarJugada:
     Mgets   inputBuffer
 
@@ -563,6 +567,8 @@ zorroIngresarJugada:
     sub     rsp,8
     call    RealizarMovimientoZorro
     add     rsp,8
+    jmp     turnoZorro
+
     cmp     rax,0
     je      establecerTurnoDeOcas
 
@@ -659,8 +665,20 @@ mostrarEstadisticasFin:
     call    MostrarTablero
     add     rsp,8 
 
-    ; Falta implementar - hay que mostrar las estadísticas de movimiento del zorro.
+mostrarEstadisticasZorro:
+    mov             rsi,0
+    mov             rdx,0
 
+    mov             rcx,registroDatosPartida
+    add             rcx,53
+    add             sil,byte[rcx]
+
+
+    add             rcx,42
+    add             rdx,qword[rcx]
+    Mprintf         mensajeEstadisticasZorro
+
+    jmp             zorroIngresarJugada
     ret
 
 guardarPartida:
@@ -676,7 +694,7 @@ guardarPartida:
     ; Sino, guardo la partida
     mov             qword[idArchivoGuardado],rax
     mov             rdi,registroDatosPartida
-    mov             rsi,95
+    mov             rsi,103
     mov             rdx,1
     mov             rcx,[idArchivoGuardado]
     sub             rsp,8

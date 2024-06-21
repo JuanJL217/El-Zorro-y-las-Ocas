@@ -601,13 +601,26 @@ restarUno:
     mov     bl,byte[repEspacio]
     mov     byte[r8],bl
 
+
+    ; Se incrementa la cantidad de ocas comidas
     mov     rax,[dirTablero]
     add     rax,53 ; rax = dirOcasComidas
     mov     bl,byte[rax]
     inc     bl
     mov     byte[rax],bl
 
+
+
 finRealizarMovimiento:
+
+ ; Se incrementa la cantidad de movimientos realizados por el zorro
+    mov     rax,[dirTablero]
+    add     rax,95 ; rax = dirMovZorro
+    mov     rbx,qword[rax]
+    inc     rbx
+    mov     qword[rax],rbx
+
+
     mov     rax,0
     mov     al,r11b
 
