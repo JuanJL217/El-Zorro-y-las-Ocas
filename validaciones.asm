@@ -2,6 +2,7 @@ global ValidarMenu
 global ValidarPersonalizacion
 global ValidarOrientacion
 global ValidarEntradaTurnoZorro
+global ValidarEntradaTunroZorroExtra
 global ValidarMovimientoOca
 global ValidarPosicionOca
 global ValidarFilaColumna
@@ -24,6 +25,7 @@ section .data
 
     caracterGuardarPartida              db "G"
     caracterSalirDelJuego               db "S"
+    caracterTerminarTurno               db "T"
     caracterElegirOca                   db "O"
 
     repOcas                             db 1
@@ -200,6 +202,22 @@ IngresaMovimientoValido:
 
 IngresoInvalido:
     mov     rax,-1
+    ret
+
+ValidarEntradaTunroZorroExtra:
+    mov     [dirVectMovimientos],rdi
+    mov     rax,[rsi]
+    mov     [caracterAValidar],rax
+    
+    mov     al,[caracterTerminarTurno]
+    cmp     al,[caracterAValidar]
+    je      IngresaTerminarTurno
+
+    jmp     ValidarEntradaTurnoZorro
+
+IngresaTerminarTurno:
+    mov     rax,0
+    mov     al,[caracterTerminarTurno]
     ret
 
 ValidarMovimientoOca:

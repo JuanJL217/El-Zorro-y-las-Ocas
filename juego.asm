@@ -45,6 +45,7 @@ extern ValidarOrientacion
 extern CopiarTablero
 extern MostrarTablero
 extern VerificarMovimientoZorro
+extern ValidarEntradaTunroZorroExtra
 extern ContarOcas
 extern CalcularMovimientosZorro
 extern FiltrarMovimientosQueNoComenOcas
@@ -67,6 +68,7 @@ section .data
     mensajeOpcionInvalida       db "Opción ingresada inválida. Debes ingresar un número de opción.",10,0
     mensajeIngresoInvalido      db "El caracter ingresado no representa una acción posible a realizar. Por favor, guíese con los controles mostrados debajo del tablero.",10,0
     mostrarControlesZorro       db "CONTROLES:",10," Ingresar uno de los caracteres indicados entre paréntesis. Los movimientos disponibles en este turno estan mostrados en el tablero con el número correspondiente.",10,"(G) Guardar Partida - (S) Salir del Juego - (1 - 9) Movimiento",10,0
+    mostrarControlesZorroExtra  db "CONTROLES:",10," Ingresar uno de los caracteres indicados entre paréntesis. Los movimientos disponibles en este turno estan mostrados en el tablero con el número correspondiente.",10,"(G) Guardar Partida - (S) Salir del Juego - (T) Terminar Turno - (1 - 9) Movimiento",10,0
     mensajeTurnoOcas            db "  ** TURNO DE LAS OCAS **",10,0
     mensajeTurnoZorro           db "   ** TURNO DEL ZORRO **",10,0
     nombreArchivoGuardado       db "partidaGuardada.dat",0
@@ -103,8 +105,9 @@ section .data
     orientacionSur              db "S"
     orientacionEste             db "E"
     orientacionOeste            db "O"
-    caracterGuardarPartida              db "G"
-    caracterSalirDelJuego               db "S"
+    caracterGuardarPartida      db "G"
+    caracterSalirDelJuego       db "S"
+    caracterTerminarTurno       db "T"
     turnoDelZorro               db 1
     turnoDeLasOcas              db 0
     ; -1 espacios inaccesibles | 0 espacio | 1 oca | 2 zorro 
@@ -601,7 +604,40 @@ turnoExtraZorro:
     call    MostrarTablero
     add     rsp,8 
 
-    Mprintf mostrarControlesZorro
+    Mprintf mostrarControlesZorroExtra
+
+zorroExtraIngresarJugada:
+    Mgets   inputBuffer
+
+    mov     rdi,movimientosPosibles
+    mov     rsi,inputBuffer
+    sub     rsp,8
+    call    ValidarEntradaTunroZorroExtra
+    add     rsp,8
+
+    cmp     al,-1
+    je      zorroExtraIngresoInvalido
+
+    cmp     al,[caracterGuardarPartida]
+    je      guardarPartida
+
+    cmp     al,[caracterSalirDelJuego]
+    je      salirDelJuego
+
+    cmp     al,[caracterTerminarTurno]
+    je      establecerTurnoDeOcas
+
+    mov     rdi,tablero
+    mov     sil,al
+    sub     rsp,8
+    call    RealizarMovimientoZorro
+    add     rsp,8
+    cmp     rax,0
+    je      establecerTurnoDeOcas
+    jmp     establecerTurnoExtraZorro
+
+zorroExtraIngresoInvalido:
+    Mprintf mensajeIngresoInvalido
     jmp     zorroIngresarJugada
 
 verificarFinDeLaPartida:
