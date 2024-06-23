@@ -96,7 +96,8 @@ section .data
     msjNoHayUnaOcaEnLaPos       db "No hay una oca en la posición ingresada. Por favor, elija una posición válida.",10,0
     msjColInvalida              db "La columna ingresada no es válida. Por favor, ingrese un número del 1 al 7.",10,0
     msjFilaInvalida             db "La fila ingresada no es válida. Por favor, ingrese un número del 1 al 7.",10,0
-    mensajeEstadisticasZorro    db  "Cantidad de ocas comidas: %li",10, "Cantidad de movimientos realizados: %li",10,0
+    mensajeEstadisticasZorro    db "Cantidad de movimientos con el numero %li realizados: %li",10,0
+    mensajeOcasComidas          db "Cantidad de ocas comidas: %li",10,0
     orientacionDefault          db "N"
     simboloOcasDefault          db "O"
     simboloZorroDefault         db "X"
@@ -157,12 +158,14 @@ section .bss
     finMovimientosPosibles  resb 1
     cantMovZorro            resq 1
 
+
     inputBuffer             resb 100
     idArchivoGuardado       resq 1
     qwordTemporal           resq 1
     filaOca                 resb 1
     colOca                  resb 1
-
+    iterador                resq 1
+    numeroTecla             resq 1
 section .text
 
 main:
@@ -656,30 +659,38 @@ mostrarVictoriaOcas:
     jmp     mostrarEstadisticasFin
 
 mostrarEstadisticasFin:
-    mov     rdi,movimientosPosibles
-    sub     rsp,8
-    call    LimpiarMovimientosPosibles
-    add     rsp,8 
-    mov     rdi,tablero
-    sub     rsp,8
-    call    MostrarTablero
-    add     rsp,8 
+    mov         rdi,movimientosPosibles
+    sub         rsp,8
+    call        LimpiarMovimientosPosibles
+    add         rsp,8 
+    mov         rdi,tablero
+    sub         rsp,8
+    call        MostrarTablero
+    add         rsp,8 
 
 mostrarEstadisticasZorro:
-    mov             rsi,0
-    mov             rdx,0
+    mov         qword[iterador],0
+    mov         qword[numeroTecla],1
+    mov         rdx,0
+mostrarEstadisticasZorroLoop:
+    cmp         qword[numeroTecla],5
+    je          incrementarNumero
 
-    mov             rcx,registroDatosPartida
-    add             rcx,53
-    add             sil,byte[rcx]
+    mov         rdi,[iterador]
+    cmp         rdi,8
+    je          finalizar
 
+    add         rdi,estadisticasZorro
 
-    add             rcx,42
-    add             rdx,qword[rcx]
-    Mprintf         mensajeEstadisticasZorro
-
-    jmp             zorroIngresarJugada
-    ret
+    mov         rsi,[numeroTecla]
+    mov         dl,byte[rdi]
+    Mprintf     mensajeEstadisticasZorro
+    inc         qword[iterador]
+incrementarNumero:
+    inc         qword[numeroTecla]
+    jmp         mostrarEstadisticasZorroLoop
+finalizar:
+    jmp         zorroIngresarJugada
 
 guardarPartida:
     ; Abro el archivo de guardado

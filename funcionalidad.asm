@@ -612,15 +612,6 @@ restarUno:
 
 
 finRealizarMovimiento:
-
- ; Se incrementa la cantidad de movimientos realizados por el zorro
-    mov     rax,[dirTablero]
-    add     rax,95 ; rax = dirMovZorro
-    mov     rbx,qword[rax]
-    inc     rbx
-    mov     qword[rax],rbx
-
-
     mov     rax,0
     mov     al,r11b
 
