@@ -673,15 +673,15 @@ mostrarOcasComidas:
     Mprintf     mensajeOcasComidas
 
 mostrarEstadisticasZorro:
-    mov         qword[iterador],0
-    mov         qword[numeroTecla],1
+    mov         qword[iterador],0       ;Para recorrer las estadisticas del zorro
+    mov         qword[numeroTecla],1    ;Para enumerar las teclas ira del 1 - 9 sin contar el 5
     mov         rdx,0
 mostrarEstadisticasZorroLoop:
-    cmp         qword[numeroTecla],5
-    je          incrementarNumero
+    cmp         qword[numeroTecla],5     ;No hay movimiento para la tecla 5
+    je          incrementarNumero          
 
     mov         rdi,[iterador]
-    cmp         rdi,8
+    cmp         rdi,8                   ;ya se recorrieron todas las estadisticas
     je          finalizar
 
     add         rdi,estadisticasZorro
