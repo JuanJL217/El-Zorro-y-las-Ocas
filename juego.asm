@@ -545,7 +545,7 @@ turnoZorro:
 
     Mprintf mostrarControlesZorro
 
-    jmp    mostrarEstadisticasZorro
+    jmp    mostrarOcasComidas
 
 zorroIngresarJugada:
     Mgets   inputBuffer
@@ -570,7 +570,6 @@ zorroIngresarJugada:
     sub     rsp,8
     call    RealizarMovimientoZorro
     add     rsp,8
-    jmp     turnoZorro
 
     cmp     rax,0
     je      establecerTurnoDeOcas
@@ -666,7 +665,12 @@ mostrarEstadisticasFin:
     mov         rdi,tablero
     sub         rsp,8
     call        MostrarTablero
-    add         rsp,8 
+    add         rsp,8
+
+mostrarOcasComidas:
+    mov         rsi,0
+    mov         sil,byte[ocasComidas]
+    Mprintf     mensajeOcasComidas
 
 mostrarEstadisticasZorro:
     mov         qword[iterador],0
