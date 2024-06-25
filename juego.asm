@@ -98,6 +98,8 @@ section .data
     msjNoHayUnaOcaEnLaPos       db "No hay una oca en la posición ingresada. Por favor, elija una posición válida.",10,0
     msjColInvalida              db "La columna ingresada no es válida. Por favor, ingrese un número del 1 al 7.",10,0
     msjFilaInvalida             db "La fila ingresada no es válida. Por favor, ingrese un número del 1 al 7.",10,0
+    mensajeEstadisticasZorro    db "Cantidad de movimientos con el numero %li realizados: %li",10,0
+    mensajeOcasComidas          db "Cantidad de ocas comidas: %li",10,0
     orientacionDefault          db "N"
     simboloOcasDefault          db "O"
     simboloZorroDefault         db "X"
@@ -163,7 +165,8 @@ section .bss
     qwordTemporal           resq 1
     filaOca                 resb 1
     colOca                  resb 1
-
+    iterador                resq 1
+    numeroTecla             resq 1
 section .text
 
 main:
@@ -695,8 +698,33 @@ mostrarEstadisticasFin:
     call    MostrarTablero
     add     rsp,8 
 
-    ; Falta implementar - hay que mostrar las estadísticas de movimiento del zorro.
+mostrarOcasComidas:
+    mov         rsi,0
+    mov         sil,byte[ocasComidas]
+    Mprintf     mensajeOcasComidas
 
+mostrarEstadisticasZorro:
+    mov         qword[iterador],0        ;Para recorrer las estadisticas del zorro
+    mov         qword[numeroTecla],1     ;Para enumerar las teclas va del 1 - 9 sin contar el 5
+    mov         rdx,0
+mostrarEstadisticasZorroLoop:
+    cmp         qword[numeroTecla],5      ;No hay movimiento para la tecla 5
+    je          incrementarNumero          
+
+    mov         rdi,[iterador]
+    cmp         rdi,8                     ;ya se recorrieron todas las estadisticas
+    je          finalizar
+
+    add         rdi,estadisticasZorro
+
+    mov         rsi,[numeroTecla]
+    mov         dl,byte[rdi]
+    Mprintf     mensajeEstadisticasZorro
+    inc         qword[iterador]
+incrementarNumero:
+    inc         qword[numeroTecla]
+    jmp         mostrarEstadisticasZorroLoop
+finalizar:
     ret
 
 guardarPartida:
