@@ -93,11 +93,11 @@ section .data
     msjOcasElegirFila           db "Ingrese la fila de la oca que desea mover. (Número del 1 al 7): ",0
     msjOcasElegirCol            db "Ingrese la columna de la oca que desea mover. (Número del 1 al 7): ",0
     msjOcaMovimientoInvalido    db "El movimiento ingresado no es válido. Por favor, ingrese uno de los movimientos posibles mostrados en el tablero.",10,0
-    msjOcaNoTieneMovimientosPosibles   db  "La oca seleccionada no tiene movimientos posibles. Por favor, elija otra oca.",10,0
+    msjOcaNoTieneMovimientosPosibles   db  "La oca seleccionada no tiene movimientos posibles. Por favor, elija otra oca.",10,10,0
     msjOcaPedirMovimiento       db "Ingrese el número del movimiento que desea realizar, los movimientos disponibles en este turno estan mostrados en el tablero con el número correspondiente.",10,0
-    msjNoHayUnaOcaEnLaPos       db "No hay una oca en la posición ingresada. Por favor, elija una posición válida.",10,0
-    msjColInvalida              db "La columna ingresada no es válida. Por favor, ingrese un número del 1 al 7.",10,0
-    msjFilaInvalida             db "La fila ingresada no es válida. Por favor, ingrese un número del 1 al 7.",10,0
+    msjNoHayUnaOcaEnLaPos       db "No hay una oca en la posición ingresada. Por favor, elija una posición válida.",10,10,0
+    msjColInvalida              db "La columna ingresada no es válida.",10,"Por favor, ingrese un número del 1 al 7: ",0
+    msjFilaInvalida             db "La fila ingresada no es válida.",10,"Por favor, ingrese un número del 1 al 7: ",0
     mensajeEstadisticasZorro    db "Cantidad de movimientos con el numero %li realizados: %li",10,0
     mensajeOcasComidas          db "Cantidad de ocas comidas: %li",10,0
     orientacionDefault          db "N"
